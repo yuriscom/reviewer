@@ -35,6 +35,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,14 +43,17 @@ import java.util.stream.Collectors;
 @Service
 public class VisitorsService {
 
-    @Autowired
-    AmazonClient amazonClient;
-
     @Value("${aws.s3.bucket}")
     private String bucket;
 
     @Value("${web.url}")
     private String url;
+
+    @Autowired
+    AmazonClient amazonClient;
+
+    @Autowired
+    HashService hashService;
 
     @Autowired
     private ModelMapper mapper;
@@ -165,8 +169,8 @@ public class VisitorsService {
         return map;
     }
 
-    private String generateWebUrl(Patient patient) {
-        return String.format("%s?hash=%s", url.trim(), patient.getHash());
+    private String generateWebUrl(Patient patient) throws NoSuchAlgorithmException {
+        return String.format("%s/%s", url.trim(), hashService.toHash(patient));
     }
 
 
@@ -186,7 +190,12 @@ public class VisitorsService {
         for (Patient patient : patients) {
             Map<String, String> map = new HashMap<>();
             map.put("name", patient.getOhip());
-            map.put("url", generateWebUrl(patient));
+            try {
+                map.put("url", generateWebUrl(patient));
+            } catch (Exception e) {
+                log.error("Could not generate web url for patient " + patient.getId());
+                continue;
+            }
 
             String templateName = patient.getSampleId() == 1 ? "push" : "push_web_version";
 

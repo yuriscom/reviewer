@@ -19,6 +19,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.wilderman.reviewer</groupId>
+            <artifactId>reviewer-service</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
             <version>4.6</version>
@@ -57,19 +63,19 @@
             <version>4.4.1</version>
         </dependency>
         <dependency>
-        	<groupId>org.apache.poi</groupId>
-        	<artifactId>poi-ooxml</artifactId>
-        	<version>4.1.0</version>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>4.1.0</version>
         </dependency>
         <dependency>
-        	<groupId>javax.xml</groupId>
-        	<artifactId>jaxp-api</artifactId>
-        	<version>1.4.2</version>
+            <groupId>javax.xml</groupId>
+            <artifactId>jaxp-api</artifactId>
+            <version>1.4.2</version>
         </dependency>
         <dependency>
-        	<groupId>org.springframework.boot</groupId>
-        	<artifactId>spring-boot-starter-test</artifactId>
-        	<scope>test</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.clearbit/client -->
         <dependency>
@@ -78,5 +84,16 @@
             <version>0.9</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>

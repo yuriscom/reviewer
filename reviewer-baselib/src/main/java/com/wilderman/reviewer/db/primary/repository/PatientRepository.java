@@ -28,4 +28,6 @@ public interface PatientRepository extends ExtendedRepository<Patient, Long>, Cu
             "v.status in ('NEW') \n" +
             "and p.status in ?1")
     List<Patient> findAllUnprocessed(List<PatientStatus> statuses);
+
+    List<Patient> findAllByHash(String hash);
 }

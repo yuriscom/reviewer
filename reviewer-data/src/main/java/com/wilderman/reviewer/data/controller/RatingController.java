@@ -5,8 +5,16 @@ import com.wilderman.reviewer.controller.BaseController;
 import com.wilderman.reviewer.data.annotation.RequireValidHash;
 import com.wilderman.reviewer.data.dto.RateInput;
 import com.wilderman.reviewer.data.dto.RateResponse;
+import com.wilderman.reviewer.db.primary.entities.Patient;
+import com.wilderman.reviewer.dto.SmsResponseHandlerInput;
+import com.wilderman.reviewer.dto.SmsResponseHandlerOutput;
 import com.wilderman.reviewer.dto.response.Response;
 import com.wilderman.reviewer.exception.ServiceException;
+import com.wilderman.reviewer.service.HashService;
+import com.wilderman.reviewer.service.LambdaService;
+import org.apache.http.HttpStatus;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,36 +24,37 @@ import javax.servlet.http.HttpServletRequest;
 @GenerateSwaggerSpec
 public class RatingController extends BaseController {
 
+    @Autowired
+    HashService hashService;
+
+    @Autowired
+    LambdaService lambdaService;
+
+    @Autowired
+    private ModelMapper mapper;
+
     @PostMapping(value = "", produces = "application/json", consumes = "application/json")
     @RequireValidHash
     public Response<RateResponse> rate(HttpServletRequest req, @RequestParam String hash, @RequestBody RateInput rateInput) throws ServiceException {
         try {
-            String ss = "";
-            // get creator
-//            ApiAuthentication auth = this.getAuth(req);
-//            User createdBy = null;
-//            if (auth != null) {
-//                createdBy = auth.getUser();
-//            }
+            Patient patient = hashService.fromHash(hash);
+            if (patient == null) {
+                throw new ServiceException("Hash is invalid");
+            }
+
+            SmsResponseHandlerInput input = new SmsResponseHandlerInput(patient, rateInput.getRating());
+            SmsResponseHandlerOutput output = lambdaService.rateHandler(input);
 
 
-            // check if the brand is existing
-//            Brand entity = this.brandService.findBrandByName(brandRequest.getName());
-//            if (entity == null) {
-//                // create brand
-//                entity = this.brandService.create(brandRequest, createdBy);
-//            }
-//
-//            BrandResponse brandResponse = mapper.map(entity, BrandResponse.class);
-//            if (entity.getStatus() == BrandStatus.PENDING) {
-//                return new Response<>(HttpStatus.SC_OK, brandResponse);
-//            } else {
-//                return new Response<>(HttpStatus.SC_BAD_REQUEST, null, String.format("Brand with name [%s] is already existing & verified!", brandRequest.getName()));
-//            }
+            RateResponse rateResponse = mapper.map(output, RateResponse.class);
+            if (output.getStatusCode() == 200) {
+                return new Response<>(HttpStatus.SC_OK, rateResponse);
+            } else {
+                return new Response<>(HttpStatus.SC_BAD_REQUEST, null, output.getBody().getError());
+            }
         } catch (Exception e) {
-//            return new Response<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, null, e.getMessage());
+            String sss = "";
+            return new Response<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, null, e.getMessage());
         }
-
-        return null;
     }
 }

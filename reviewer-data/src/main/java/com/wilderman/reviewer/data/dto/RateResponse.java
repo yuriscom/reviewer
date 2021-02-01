@@ -10,4 +10,9 @@ public class RateResponse {
     public void setRated(boolean rated) {
         isRated = rated;
     }
+
+    public void setRatedInt(Integer statusCode) {
+        isRated = statusCode == 200 ? true : false;
+    }
+
 }
