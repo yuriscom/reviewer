@@ -288,18 +288,6 @@
         </resources>
     </build>
 
-
-    <!--<distributionManagement>-->
-        <!--<repository>-->
-            <!--<id>releases.maven.hubub.com</id>-->
-            <!--<url>https://maven.hubub.com/nexus/content/repositories/releases/</url>-->
-        <!--</repository>-->
-        <!--<snapshotRepository>-->
-            <!--<id>snapshots.maven.hubub.com</id>-->
-            <!--<url>https://maven.hubub.com/nexus/content/repositories/snapshots/</url>-->
-        <!--</snapshotRepository>-->
-    <!--</distributionManagement>-->
-
     <repositories>
         <repository>
             <id>maven central</id>
