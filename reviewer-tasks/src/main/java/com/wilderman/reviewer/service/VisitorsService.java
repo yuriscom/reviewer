@@ -7,13 +7,11 @@ import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
-import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitorFetchLogStatus;
 import com.wilderman.reviewer.db.primary.repository.PatientRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitorFetchLogRepository;
-import com.wilderman.reviewer.dto.PublishSmsInput;
-import com.wilderman.reviewer.dto.PublishSmsOutput;
+import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.CsvBean;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.CustomerElement;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.PatientVisitRecord;
@@ -72,6 +70,9 @@ public class VisitorsService {
 
     @Autowired
     MessageTextService messageTextService;
+
+    @Autowired
+    PatientService patientService;
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -188,30 +189,11 @@ public class VisitorsService {
         }
 
         for (Patient patient : patients) {
-            Map<String, String> map = new HashMap<>();
-            map.put("name", patient.getOhip());
             try {
-                map.put("url", generateWebUrl(patient));
-            } catch (Exception e) {
-                log.error("Could not generate web url for patient " + patient.getId());
+                patientService.pushNotification(patient);
+            } catch (ServiceException e) {
                 continue;
             }
-
-            String templateName = patient.getSampleId() == 1 ? "push" : "push_web_version";
-
-            String msg = messageTextService.parse(templateName, map);
-            String phone = patient.getPhone();
-
-            PublishSmsOutput output = lambdaService.publishSms(new PublishSmsInput(phone, msg));
-            if (output.getStatusCode() != 200) {
-                throw new Exception("Error in lambda service");
-            }
-
-            for (Visit visit : patient.getVisits()) {
-                visit.setStatus(VisitStatus.PROCESSED);
-            }
-
-            patient.setStatus(PatientStatus.SENT);
         }
 
         if (patients.size() > 0) {
@@ -224,5 +206,32 @@ public class VisitorsService {
 
         return true;
     }
+
+//    private void pushNotification(Patient patient) throws Exception {
+//        Map<String, String> map = new HashMap<>();
+//        map.put("name", patient.getOhip());
+//        try {
+//            map.put("url", generateWebUrl(patient));
+//        } catch (Exception e) {
+//            log.error("Could not generate web url for patient " + patient.getId());
+//            return;
+//        }
+//
+//        String templateName = patient.getSampleId() == 1 ? "push" : "push_web_version";
+//
+//        String msg = messageTextService.parse(templateName, map);
+//        String phone = patient.getPhone();
+//
+//        PublishSmsOutput output = lambdaService.publishSms(new PublishSmsInput(phone, msg));
+//        if (output.getStatusCode() != 200) {
+//            throw new Exception("Error in lambda service");
+//        }
+//
+//        for (Visit visit : patient.getVisits()) {
+//            visit.setStatus(VisitStatus.PROCESSED);
+//        }
+//
+//        patient.setStatus(PatientStatus.SENT);
+//    }
 
 }

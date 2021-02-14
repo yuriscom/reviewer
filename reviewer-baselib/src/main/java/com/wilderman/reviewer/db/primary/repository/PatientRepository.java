@@ -30,4 +30,6 @@ public interface PatientRepository extends ExtendedRepository<Patient, Long>, Cu
     List<Patient> findAllUnprocessed(List<PatientStatus> statuses);
 
     List<Patient> findAllByHash(String hash);
+
+    Patient findFirstByOhip(String ohip);
 }

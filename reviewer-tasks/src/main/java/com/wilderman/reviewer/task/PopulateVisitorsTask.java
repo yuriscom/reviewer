@@ -1,12 +1,10 @@
 package com.wilderman.reviewer.task;
 
-import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.service.VisitorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,7 +12,7 @@ import java.time.LocalDateTime;
 @Component
 public class PopulateVisitorsTask extends BaseTask {
 	@Autowired
-    VisitorsService visitorsService;
+	VisitorsService visitorsService;
 
 
 	@Scheduled(cron = "${task.PopulateVisitorsTask.cron:* * * * * *}")
