@@ -4,15 +4,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ResponseBody {
-    private String result;
+    private String hash;
     private String error;
 
-    public String getResult() {
-        return result;
+    public String getHash() {
+        return hash;
     }
 
-    public void setResult(String result) {
-        this.result = result;
+    public void setHash(String hash) {
+        this.hash = hash;
     }
 
     public String getError() {

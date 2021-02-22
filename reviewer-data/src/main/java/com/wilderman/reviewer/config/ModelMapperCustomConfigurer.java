@@ -20,5 +20,6 @@ public class ModelMapperCustomConfigurer implements ModelMapperConfigurer {
         rateResponseTypeMap.setPropertyCondition(Conditions.isNotNull());
 //        rateResponseTypeMap.addMapping(src -> src.getBody().getError(), RateResponse::setError);
         rateResponseTypeMap.addMapping(src -> src.getStatusCode(), RateResponse::setRatedInt);
+        rateResponseTypeMap.addMapping(src -> src.getBody().getHash(), RateResponse::setHash);
     }
 }

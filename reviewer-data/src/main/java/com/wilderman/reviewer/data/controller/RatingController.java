@@ -55,8 +55,8 @@ public class RatingController extends BaseController {
 
             SmsResponseHandlerOutput output = lambdaService.rateHandler(input);
 
-            RateResponse rateResponse = mapper.map(output, RateResponse.class);
-            if (output.getStatusCode() == 200) {
+            RateResponse rateResponse = mapper.map(output.getBody(), RateResponse.class);
+            if (output.getStatusCode() == 200 && output.getBody().getHash().length() > 0) {
                 return new Response<>(HttpStatus.SC_OK, rateResponse);
             } else {
                 return new Response<>(HttpStatus.SC_BAD_REQUEST, null, output.getBody().getError());
