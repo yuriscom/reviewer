@@ -27,7 +27,10 @@ public class SmsResponseHandlerInput {
         ]
      */
 
-    public SmsResponseHandlerInput(Patient patient, Integer rating) {
+    public SmsResponseHandlerInput(Patient patient, Integer rating) throws Exception {
+        if (rating == null) {
+            throw new Exception("Rating cannot be null");
+        }
         MessageObject message = new MessageObject(patient, rating);
         SnsObject snsObject = new SnsObject(message);
         SmsResponseHandlerObject obj = new SmsResponseHandlerObject(snsObject);
@@ -43,5 +46,9 @@ public class SmsResponseHandlerInput {
 
     public void setRecords(List<SmsResponseHandlerObject> records) {
         this.records = records;
+    }
+
+    public boolean isValid() {
+        return this.getRecords().get(0).getSns().getMessage() != null;
     }
 }

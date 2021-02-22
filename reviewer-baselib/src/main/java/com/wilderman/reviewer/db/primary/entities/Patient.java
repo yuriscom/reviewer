@@ -11,6 +11,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 @Entity
 @Table(name = "patient", schema = "public")
@@ -61,6 +62,10 @@ public class Patient implements IEntityId {
     @OneToMany(mappedBy = "patient", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Collection<Visit> visits;
+
+    @OneToMany(mappedBy = "patient", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<Review> reviews;
 
     public Long getId() {
         return id;
@@ -165,5 +170,13 @@ public class Patient implements IEntityId {
 
     public void setSampleId(Integer sampleId) {
         this.sampleId = sampleId;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
     }
 }

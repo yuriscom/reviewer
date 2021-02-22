@@ -2,14 +2,16 @@ package com.wilderman.reviewer.db.primary.entities;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
+import org.hibernate.annotations.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -55,6 +57,10 @@ public class Visit {
     @Column(name = "updated_at", nullable = false)
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "visit", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<Review> reviews;
 
     public Visit() {
     }
@@ -143,5 +149,13 @@ public class Visit {
 
     public void setHash(String hash) {
         this.hash = hash;
+    }
+
+    public List<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(List<Review> reviews) {
+        this.reviews = reviews;
     }
 }

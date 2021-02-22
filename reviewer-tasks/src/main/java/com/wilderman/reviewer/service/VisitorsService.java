@@ -7,6 +7,7 @@ import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
+import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitorFetchLogStatus;
 import com.wilderman.reviewer.db.primary.repository.PatientRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
@@ -170,10 +171,6 @@ public class VisitorsService {
         return map;
     }
 
-    private String generateWebUrl(Patient patient) throws NoSuchAlgorithmException {
-        return String.format("%s/%s", url.trim(), hashService.toHash(patient));
-    }
-
 
     @Transactional
     public boolean scanVisitorsAndSendMessages() throws Exception {
@@ -189,8 +186,12 @@ public class VisitorsService {
         }
 
         for (Patient patient : patients) {
+            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.NEW)).findFirst().orElse(null);
+            if (visit == null) {
+                // should not be here because query above will select only the ones with visit status new
+            }
             try {
-                patientService.pushNotification(patient);
+                patientService.pushNotification(visit);
             } catch (ServiceException e) {
                 continue;
             }
@@ -206,32 +207,5 @@ public class VisitorsService {
 
         return true;
     }
-
-//    private void pushNotification(Patient patient) throws Exception {
-//        Map<String, String> map = new HashMap<>();
-//        map.put("name", patient.getOhip());
-//        try {
-//            map.put("url", generateWebUrl(patient));
-//        } catch (Exception e) {
-//            log.error("Could not generate web url for patient " + patient.getId());
-//            return;
-//        }
-//
-//        String templateName = patient.getSampleId() == 1 ? "push" : "push_web_version";
-//
-//        String msg = messageTextService.parse(templateName, map);
-//        String phone = patient.getPhone();
-//
-//        PublishSmsOutput output = lambdaService.publishSms(new PublishSmsInput(phone, msg));
-//        if (output.getStatusCode() != 200) {
-//            throw new Exception("Error in lambda service");
-//        }
-//
-//        for (Visit visit : patient.getVisits()) {
-//            visit.setStatus(VisitStatus.PROCESSED);
-//        }
-//
-//        patient.setStatus(PatientStatus.SENT);
-//    }
 
 }

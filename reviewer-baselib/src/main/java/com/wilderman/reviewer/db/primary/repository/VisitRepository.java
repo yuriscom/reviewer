@@ -1,6 +1,7 @@
 package com.wilderman.reviewer.db.primary.repository;
 
 import com.wilderman.reviewer.db.primary.entities.Visit;
+import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,4 +21,5 @@ public interface VisitRepository extends ExtendedRepository<Visit, Long>, Custom
     @Query("update Visit v set v.status = 'PROCESSED' where v.status = 'PENDING' and log_id in (:logIds)")
     void setSentByLogIds(@Param("logIds") List<Long> logIds);
 
+    List<Visit> findAllByHash(String hash);
 }

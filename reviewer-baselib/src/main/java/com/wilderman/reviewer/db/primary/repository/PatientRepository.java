@@ -11,8 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 
 @Repository
-public interface PatientRepository extends ExtendedRepository<Patient, Long>, CustomRepository<Patient>{
+public interface PatientRepository extends ExtendedRepository<Patient, Long>, CustomRepository<Patient> {
     List<Patient> findAllByPhoneIn(ArrayList<String> phones);
+
     List<Patient> findAllByPhoneIn(HashSet<String> phones);
 
     @Query("select p from Patient p \n" +
@@ -22,7 +23,7 @@ public interface PatientRepository extends ExtendedRepository<Patient, Long>, Cu
             "and p.status not in ('REVIEWED')")
     List<Patient> findAllUnprocessed();
 
-        @Query("select p from Patient p \n" +
+    @Query("select p from Patient p \n" +
             "join fetch p.visits v \n" +
             "where \n" +
             "v.status in ('NEW') \n" +

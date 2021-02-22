@@ -14,7 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Entity
-@Table(name = "review", schema = "public", uniqueConstraints={@UniqueConstraint(columnNames = {"patient_id" , "visit_id"})})
+@Table(name = "review", schema = "public"
+        , uniqueConstraints = {@UniqueConstraint(columnNames = {"patient_id", "visit_id"})}
+)
 @EntityListeners({AuditingEntityListener.class})
 @TypeDefs({@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)})
 public class Review {
@@ -23,11 +25,17 @@ public class Review {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+
+    // for some reason lazy loading with findAllByHash() is not loading the patient/visit.
+    // TODO: investigate
+
+//    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "patient_id", foreignKey = @ForeignKey(name = "review__patient__fk", value = ConstraintMode.CONSTRAINT))
     private Patient patient;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+//    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "visit_id", foreignKey = @ForeignKey(name = "review__visit__fk", value = ConstraintMode.CONSTRAINT))
     private Visit visit;
 
@@ -36,6 +44,9 @@ public class Review {
 
     @Column(name = "hash", length = 255)
     private String hash;
+
+    @Column(name = "message")
+    private String message;
 
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "data")
@@ -111,5 +122,13 @@ public class Review {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }
