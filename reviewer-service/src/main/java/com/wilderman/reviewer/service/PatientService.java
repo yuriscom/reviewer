@@ -147,7 +147,7 @@ public class PatientService {
 
         Map<String, String> map = new HashMap<>();
         map.put("name", patient.getOhip());
-        map.put("refno", String.format("%0" + 5 + "d", review.getId()));
+        map.put("refno", review.getReferenceNo());
         String msg = messageTextService.parse("received_bad_review", map);
 
         PublishSmsOutput output = lambdaService.publishSms(new PublishSmsInput(patient.getPhone(), msg));

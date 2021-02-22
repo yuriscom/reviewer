@@ -131,4 +131,8 @@ public class Review {
     public void setMessage(String message) {
         this.message = message;
     }
+
+    public String getReferenceNo() {
+        return String.format("%0" + 5 + "d", getId());
+    }
 }

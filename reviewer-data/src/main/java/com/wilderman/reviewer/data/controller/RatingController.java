@@ -4,6 +4,7 @@ import com.wilderman.reviewer.config.GenerateSwaggerSpec;
 import com.wilderman.reviewer.controller.BaseController;
 import com.wilderman.reviewer.data.annotation.RequireValidHash;
 import com.wilderman.reviewer.data.dto.BadReviewInput;
+import com.wilderman.reviewer.data.dto.BadReviewOutput;
 import com.wilderman.reviewer.data.dto.RateInput;
 import com.wilderman.reviewer.data.dto.RateResponse;
 import com.wilderman.reviewer.db.primary.entities.Patient;
@@ -70,19 +71,20 @@ public class RatingController extends BaseController {
     @PostMapping(value = "/review", produces = "application/json", consumes = "application/json")
     @RequireValidHash
     public Response<Boolean> leaveBadReview(HttpServletRequest req, @RequestParam String hash, @RequestBody BadReviewInput badReviewInput) throws ServiceException {
+        Review review = new Review();
         try {
-            Review review = hashService.getReviewByHash(hash);
+            review = hashService.getReviewByHash(hash);
             if (review == null) {
                 throw new ServiceException("Hash is invalid");
             }
 
-            Review reviewRec = patientService.leaveBadReview(review, badReviewInput.getReview());
-            String s = "";
+            review = patientService.leaveBadReview(review, badReviewInput.getReview());
+
 
         } catch (Exception e) {
             return new Response<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, null, e.getMessage());
         }
 
-        return new Response<>(true);
+        return new Response(new BadReviewOutput(review));
     }
 }
