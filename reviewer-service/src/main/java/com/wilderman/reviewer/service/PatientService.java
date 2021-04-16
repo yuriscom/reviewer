@@ -74,13 +74,6 @@ public class PatientService {
             throw new ServiceException("Visit for a patient with test ohip was not found");
         }
 
-        String hash;
-        try {
-            hash = hashService.toHash(visit);
-        } catch (NoSuchAlgorithmException e) {
-            throw new ServiceException("Could not hash visit");
-        }
-
         if (phoneNumber != null) {
             patient.setPhone(phoneNumberService.standardize(phoneNumber));
         }
@@ -97,6 +90,13 @@ public class PatientService {
         patientRepository.save(patient);
 
         pushNotification(visit);
+
+        String hash;
+        try {
+            hash = hashService.toHash(visit);
+        } catch (NoSuchAlgorithmException e) {
+            throw new ServiceException("Could not hash visit");
+        }
 
         return hash;
     }
