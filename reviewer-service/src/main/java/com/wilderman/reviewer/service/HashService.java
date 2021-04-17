@@ -123,7 +123,13 @@ public class HashService {
     }
 
     private String[] getHashParts(String fullHashEncoded) throws Exception {
-        String fullHash = new String(Base64.getDecoder().decode(fullHashEncoded));
+        fullHashEncoded = fullHashEncoded.trim();
+        String fullHash;
+        try {
+            fullHash = new String(Base64.getDecoder().decode(fullHashEncoded.trim()));
+        } catch (IllegalArgumentException e) {
+            fullHash = new String(Base64.getDecoder().decode(fullHashEncoded.replaceAll("=$", "")));
+        }
         String[] hashParts = fullHash.split(",");
         if (hashParts.length != 2) {
             throw new Exception("invalid hash");
