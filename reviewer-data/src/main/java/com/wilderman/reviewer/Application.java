@@ -19,7 +19,7 @@ public class Application {
 
         builder.sources(Application.class)
                 .properties("spring.config.name:application.properties",
-                        "spring.config.location:classpath:/application.properties,file:///srv/application.properties")
+                        "spring.config.location:classpath:/application.properties,file:///srv/application.properties,file:///usr/local/srv/reviewer/application.properties")
         ;
 
         builder.build(args).run(args);

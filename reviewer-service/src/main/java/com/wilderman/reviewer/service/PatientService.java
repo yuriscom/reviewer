@@ -58,17 +58,19 @@ public class PatientService {
     @Autowired
     MessageTextService messageTextService;
 
-    private static final String testOhip = "12345";
+//    private static final String testOhip = "12345";
     public static final Integer BAD_RATING_MAX = 3;
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Transactional
-    public String initPatientForTest(String phoneNumber) throws ServiceException {
-        Patient patient = patientRepository.findFirstByOhip(testOhip);
-        if (patient == null) {
-            throw new ServiceException("Patient with test ohip was not found");
-        }
+    public String initPatientForTest(String phoneNumber, Long id) throws ServiceException {
+//        Patient patient = patientRepository.findFirstByOhip(testOhip);
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ServiceException("Patient with id " + id + " was not found"));
+//        if (patient == null) {
+//            throw new ServiceException("Patient with test ohip was not found");
+//        }
 
         Visit visit = Optional.ofNullable(patient.getVisits())
                 .orElse(Collections.emptyList())
