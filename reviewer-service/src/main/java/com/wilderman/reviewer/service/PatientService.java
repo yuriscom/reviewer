@@ -19,6 +19,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
@@ -30,6 +33,9 @@ public class PatientService {
 
     @Value("${web.url}")
     private String url;
+
+    @Value("${link.google}")
+    private String linkGoogle;
 
     @Autowired
     PatientRepository patientRepository;
@@ -132,6 +138,50 @@ public class PatientService {
     }
 
     @Transactional
+    public Review ack(Review review) throws ServiceException {
+        Visit visit = review.getVisit();
+        Patient patient = visit.getPatient();
+        boolean isPatientOk = patient.getStatus().equals(PatientStatus.RATED);
+        boolean isVisitOk = visit.getStatus().equals(VisitStatus.RATED);
+        boolean isReviewOk = review.getRating() > BAD_RATING_MAX && review.getMessage() == null;
+
+        if (!(isPatientOk && isVisitOk && isReviewOk)) {
+            throw new ServiceException("Invalid step");
+        }
+
+        visit.setStatus(VisitStatus.ACKNOWLEDGED);
+        visitRepository.save(visit);
+
+        return review;
+    }
+
+    @Transactional
+    public void normalizePreRateState(Visit visit) {
+        if (visit.getStatus().equals(VisitStatus.RATED)) {
+            visit.setPreRatedStatus();
+        }
+
+        if (visit.getPatient().getStatus().equals(PatientStatus.RATED)) {
+            visit.getPatient().setPreRatedStatus();
+        }
+
+        visit.getReviews().removeAll(visit.getReviews());
+        visitRepository.save(visit);
+    }
+
+    public String generateReviewLink(String hash) {
+        String redirectTo = "";
+        try {
+            redirectTo = URLEncoder.encode(linkGoogle, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            redirectTo = URLEncoder.encode(linkGoogle);
+        }
+
+        //http://repman.com/?hash=alsdfjksd&redirectTo=https://www.google.com/search?q=wilderman+medical+clinic#lrd=0x882b2c7d41be60d7:0x2ec07308563270f6,1
+        return String.format("%s/#/?hash=%s&redirectTo=%s", url, hash, redirectTo);
+    }
+
+    @Transactional
     public Review leaveBadReview(Review review, String message) throws ServiceException {
         Visit visit = review.getVisit();
         Patient patient = visit.getPatient();
@@ -181,7 +231,7 @@ public class PatientService {
 //    }
 
     private String generateWebUrl(Visit visit) throws NoSuchAlgorithmException {
-        return String.format("%s/%s", url.trim(), hashService.toHash(visit));
+        return String.format("%s/#/%s", url.trim(), hashService.toHash(visit));
     }
 
     public Integer getBadRatingMax() {

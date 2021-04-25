@@ -17,10 +17,10 @@ public class ModelMapperCustomConfigurer implements ModelMapperConfigurer {
     public void configure(ModelMapper modelMapper) {
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STRICT);
 
-        TypeMap<SmsResponseHandlerOutput, RateResponse> rateResponseTypeMap = modelMapper.createTypeMap(SmsResponseHandlerOutput.class, RateResponse.class);
-        rateResponseTypeMap.setPropertyCondition(Conditions.isNotNull());
+//        TypeMap<SmsResponseHandlerOutput, RateResponse> rateResponseTypeMap = modelMapper.createTypeMap(SmsResponseHandlerOutput.class, RateResponse.class);
+//        rateResponseTypeMap.setPropertyCondition(Conditions.isNotNull());
 //        rateResponseTypeMap.addMapping(src -> src.getBody().getError(), RateResponse::setError);
-        rateResponseTypeMap.addMapping(src -> src.getStatusCode(), RateResponse::setRatedInt);
-        rateResponseTypeMap.addMapping(src -> src.getBody().getHash(), RateResponse::setHash);
+//        rateResponseTypeMap.addMapping(src -> src.getStatusCode(), RateResponse::setRatedInt);
+//        rateResponseTypeMap.addMapping(src -> src.getBody().getHash(), RateResponse::setHash);
     }
 }

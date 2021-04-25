@@ -35,7 +35,7 @@ public class Review {
     private Patient patient;
 
 //    @ManyToOne(fetch = FetchType.LAZY)
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST})
     @JoinColumn(name = "visit_id", foreignKey = @ForeignKey(name = "review__visit__fk", value = ConstraintMode.CONSTRAINT))
     private Visit visit;
 

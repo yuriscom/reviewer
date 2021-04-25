@@ -101,6 +101,12 @@ public class HashService {
     }
 
     @Transactional
+    public Review getReviewByVisitHash(String fullHashEncoded) throws Exception {
+        Visit visit = getVisitByHash(fullHashEncoded);
+        return reviewRepository.findByVisitAndPatient(visit, visit.getPatient());
+    }
+
+    @Transactional
     public Review getReviewByHash(String fullHashEncoded) throws Exception {
         String[] hashParts = getHashParts(fullHashEncoded);
 

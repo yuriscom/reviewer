@@ -1,26 +1,21 @@
 package com.wilderman.reviewer.data.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class RateResponse {
-    private boolean isRated;
     private String hash;
+    private String reviewLink;
+    private boolean isRated;
 
-    public boolean isRated() {
-        return isRated;
-    }
+//    public void setRatedInt(Integer statusCode) {
+//        isRated = statusCode == 200 ? true : false;
+//    }
 
-    public void setRated(boolean rated) {
-        isRated = rated;
-    }
-
-    public void setRatedInt(Integer statusCode) {
-        isRated = statusCode == 200 ? true : false;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
 }

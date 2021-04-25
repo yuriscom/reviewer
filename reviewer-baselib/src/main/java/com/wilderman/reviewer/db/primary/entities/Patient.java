@@ -1,6 +1,9 @@
 package com.wilderman.reviewer.db.primary.entities;
 
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
+import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
@@ -16,6 +19,8 @@ import java.util.List;
 @Entity
 @Table(name = "patient", schema = "public")
 @EntityListeners({AuditingEntityListener.class})
+@Getter
+@Setter
 public class Patient implements IEntityId {
 
     @Id
@@ -67,116 +72,12 @@ public class Patient implements IEntityId {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Review> reviews;
 
-    public Long getId() {
-        return id;
-    }
-
     @Override
     public void setId(Long id) {
         this.id = id;
     }
 
-    public String getOhip() {
-        return ohip;
-    }
-
-    public void setOhip(String ohip) {
-        this.ohip = ohip;
-    }
-
-    public Timestamp getBirthdate() {
-        return birthdate;
-    }
-
-    public void setBirthdate(Timestamp birthdate) {
-        this.birthdate = birthdate;
-    }
-
-    public String getFname() {
-        return fname;
-    }
-
-    public void setFname(String fname) {
-        this.fname = fname;
-    }
-
-    public String getLname() {
-        return lname;
-    }
-
-    public void setLname(String lname) {
-        this.lname = lname;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public PatientStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(PatientStatus status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Collection<Visit> getVisits() {
-        return visits;
-    }
-
-    public void setVisits(Collection<Visit> visits) {
-        this.visits = visits;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public Integer getSampleId() {
-        return sampleId;
-    }
-
-    public void setSampleId(Integer sampleId) {
-        this.sampleId = sampleId;
-    }
-
-    public List<Review> getReviews() {
-        return reviews;
-    }
-
-    public void setReviews(List<Review> reviews) {
-        this.reviews = reviews;
+    public void setPreRatedStatus() {
+        setStatus(PatientStatus.SENT);
     }
 }

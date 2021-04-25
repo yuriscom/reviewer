@@ -2,6 +2,9 @@ package com.wilderman.reviewer.db.primary.entities;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -19,6 +22,9 @@ import java.util.*;
 @Table(name = "visit", schema = "public")
 @EntityListeners({AuditingEntityListener.class})
 @TypeDefs({@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)})
+@Getter
+@Setter
+@NoArgsConstructor
 public class Visit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,12 +64,9 @@ public class Visit {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "visit", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(mappedBy = "visit", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private List<Review> reviews;
-
-    public Visit() {
-    }
 
     public Visit(Patient patient, Date visitedOn, VisitorFetchLog log) {
         this.setLog(log);
@@ -71,91 +74,9 @@ public class Visit {
         this.setVisitedOn(visitedOn);
     }
 
-    public Long getId() {
-        return id;
+    public void setPreRatedStatus() {
+        setStatus(VisitStatus.PROCESSED);
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
 
-    public VisitorFetchLog getLog() {
-        return log;
-    }
-
-    public void setLog(VisitorFetchLog log) {
-        this.log = log;
-    }
-
-    public Patient getPatient() {
-        return patient;
-    }
-
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-    }
-
-    public VisitStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(VisitStatus status) {
-        this.status = status;
-    }
-
-    public Date getVisitedOn() {
-        return visitedOn;
-    }
-
-    public void setVisitedOn(Date visitedOn) {
-        this.visitedOn = visitedOn;
-    }
-
-    public Integer getAttempts() {
-        return attempts;
-    }
-
-    public void setAttempts(Integer attempts) {
-        this.attempts = attempts;
-    }
-
-    public Map<String, String> getData() {
-        return data;
-    }
-
-    public void setData(Map<String, String> data) {
-        this.data = data;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public List<Review> getReviews() {
-        return reviews;
-    }
-
-    public void setReviews(List<Review> reviews) {
-        this.reviews = reviews;
-    }
 }

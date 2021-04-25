@@ -50,14 +50,18 @@ public class RatingController extends BaseController {
                 throw new ServiceException("Hash is invalid");
             }
 
+            // for possible re-rate
+            patientService.normalizePreRateState(visit);
+
             Patient patient = visit.getPatient();
 
             SmsResponseHandlerInput input = new SmsResponseHandlerInput(patient, rateInput.getRating());
 
             SmsResponseHandlerOutput output = lambdaService.rateHandler(input);
+//            RateResponse rateResponse = mapper.map(output, RateResponse.class);
 
-            RateResponse rateResponse = mapper.map(output, RateResponse.class);
             if (output.getStatusCode() == 200 && output.getBody().getHash().length() > 0) {
+                RateResponse rateResponse = new RateResponse(hash, patientService.generateReviewLink(hash), true);
                 return new Response<>(HttpStatus.SC_OK, rateResponse);
             } else {
                 return new Response<>(HttpStatus.SC_BAD_REQUEST, null, output.getBody().getError());
@@ -73,7 +77,7 @@ public class RatingController extends BaseController {
     public Response<Boolean> leaveBadReview(HttpServletRequest req, @RequestParam String hash, @RequestBody BadReviewInput badReviewInput) throws ServiceException {
         Review review = new Review();
         try {
-            review = hashService.getReviewByHash(hash);
+            review = hashService.getReviewByVisitHash(hash);
             if (review == null) {
                 throw new ServiceException("Hash is invalid");
             }
@@ -87,4 +91,26 @@ public class RatingController extends BaseController {
 
         return new Response(new BadReviewOutput(review));
     }
+
+    @PostMapping(value = "/ack", produces = "application/json", consumes = "application/json")
+    @RequireValidHash
+    public Response<Boolean> acknowledgeLinkClicked(HttpServletRequest req, @RequestParam String hash) throws ServiceException {
+        Review review = new Review();
+        try {
+            review = hashService.getReviewByVisitHash(hash);
+            if (review == null) {
+                throw new ServiceException("Hash is invalid");
+            }
+
+            patientService.ack(review);
+
+
+        } catch (Exception e) {
+            return new Response<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, null, e.getMessage());
+        }
+
+        return new Response(true);
+    }
+
+
 }
