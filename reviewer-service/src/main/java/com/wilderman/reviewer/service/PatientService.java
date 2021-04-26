@@ -152,6 +152,7 @@ public class PatientService {
         }
 
         visit.setStatus(VisitStatus.ACKNOWLEDGED);
+        visit.getPatient().setStatus(PatientStatus.ACKNOWLEDGED);
         visitRepository.save(visit);
 
         return review;
@@ -159,16 +160,15 @@ public class PatientService {
 
     @Transactional
     public void normalizePreRateState(Visit visit) {
-        if (visit.getStatus().equals(VisitStatus.RATED)) {
+        boolean ratedVisit = visit.getStatus().equals(VisitStatus.RATED);
+        boolean ratedPatient = visit.getPatient().getStatus().equals(PatientStatus.RATED);
+
+        if (ratedVisit && ratedPatient) {
             visit.setPreRatedStatus();
-        }
-
-        if (visit.getPatient().getStatus().equals(PatientStatus.RATED)) {
             visit.getPatient().setPreRatedStatus();
+            visit.getReviews().removeAll(visit.getReviews());
+            visitRepository.save(visit);
         }
-
-        visit.getReviews().removeAll(visit.getReviews());
-        visitRepository.save(visit);
     }
 
     public String generateReviewLink(String hash) {
@@ -196,6 +196,8 @@ public class PatientService {
         }
 
         review.setMessage(message);
+        visit.setStatus(VisitStatus.LEFT_BAD_REVIEW);
+        visit.getPatient().setStatus(PatientStatus.LEFT_BAD_REVIEW);
 
         Map<String, String> map = new HashMap<>();
         map.put("name", patient.getOhip());
@@ -208,7 +210,9 @@ public class PatientService {
             throw new ServiceException("Error in lambda service");
         }
 
-        return reviewRepository.save(review);
+        visitRepository.save(visit);
+        return review;
+        //return reviewRepository.save(review);
     }
 
 //    public Boolean verifyStep(Step step, Visit visit) {
