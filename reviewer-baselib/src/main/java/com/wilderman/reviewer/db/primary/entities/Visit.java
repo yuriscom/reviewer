@@ -25,7 +25,7 @@ import java.util.*;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Visit {
+public class Visit implements Hashable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -77,6 +77,4 @@ public class Visit {
     public void setPreRatedStatus() {
         setStatus(VisitStatus.PROCESSED);
     }
-
-
 }

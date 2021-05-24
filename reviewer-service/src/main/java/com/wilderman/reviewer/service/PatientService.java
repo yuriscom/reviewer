@@ -34,7 +34,7 @@ public class PatientService {
     @Value("${web.url}")
     private String url;
 
-    @Value("${link.google}")
+    @Value("${client.link.google}")
     private String linkGoogle;
 
     @Autowired
@@ -145,7 +145,7 @@ public class PatientService {
         Patient patient = visit.getPatient();
         boolean isPatientOk = patient.getStatus().equals(PatientStatus.RATED);
         boolean isVisitOk = visit.getStatus().equals(VisitStatus.RATED);
-        boolean isReviewOk = review.getRating() > BAD_RATING_MAX && review.getMessage() == null;
+        boolean isReviewOk = isReviewPositive(review);
 
         if (!(isPatientOk && isVisitOk && isReviewOk)) {
             throw new ServiceException("Invalid step");
@@ -183,13 +183,18 @@ public class PatientService {
         return String.format("%s/#/?hash=%s&redirectTo=%s", url, hash, redirectTo);
     }
 
+    public boolean isReviewPositive(Review review) {
+        //return review.getRating() <= BAD_RATING_MAX && review.getMessage() == null;
+        return review.getRating() > BAD_RATING_MAX && review.getMessage() == null;
+    }
+
     @Transactional
     public Review leaveBadReview(Review review, String message) throws ServiceException {
         Visit visit = review.getVisit();
         Patient patient = visit.getPatient();
         boolean isPatientOk = patient.getStatus().equals(PatientStatus.RATED);
         boolean isVisitOk = visit.getStatus().equals(VisitStatus.RATED);
-        boolean isReviewOk = review.getRating() <= BAD_RATING_MAX && review.getMessage() == null;
+        boolean isReviewOk = !isReviewPositive(review);
 
         if (!(isPatientOk && isVisitOk && isReviewOk)) {
             throw new ServiceException("Invalid step");

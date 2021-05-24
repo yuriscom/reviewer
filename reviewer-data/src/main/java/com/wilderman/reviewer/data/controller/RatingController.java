@@ -3,29 +3,27 @@ package com.wilderman.reviewer.data.controller;
 import com.wilderman.reviewer.config.GenerateSwaggerSpec;
 import com.wilderman.reviewer.controller.BaseController;
 import com.wilderman.reviewer.data.annotation.RequireValidHash;
-import com.wilderman.reviewer.data.dto.BadReviewInput;
-import com.wilderman.reviewer.data.dto.BadReviewOutput;
-import com.wilderman.reviewer.data.dto.RateInput;
-import com.wilderman.reviewer.data.dto.RateResponse;
+import com.wilderman.reviewer.data.dto.*;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Review;
 import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.dto.SmsResponseHandlerInput;
 import com.wilderman.reviewer.dto.SmsResponseHandlerOutput;
 import com.wilderman.reviewer.dto.response.Response;
+import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.service.HashService;
 import com.wilderman.reviewer.service.LambdaService;
 import com.wilderman.reviewer.service.PatientService;
+import com.wilderman.reviewer.service.StepService;
 import org.apache.http.HttpStatus;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/rating")
+@RequestMapping("")
 @GenerateSwaggerSpec
 public class RatingController extends BaseController {
 
@@ -39,9 +37,21 @@ public class RatingController extends BaseController {
     PatientService patientService;
 
     @Autowired
-    private ModelMapper mapper;
+    StepService stepService;
 
-    @PostMapping(value = "", produces = "application/json", consumes = "application/json")
+    @GetMapping(value = "/step")
+    @RequireValidHash
+    public Response<StepOutput> validateHash(HttpServletRequest req, @RequestParam String hash) throws Exception {
+        Step step = stepService.getByHash(hash);
+
+        if (step == null) {
+            throw new ServiceException("Hash is invalid");
+        }
+
+        return new Response<>(new StepOutput(step));
+    }
+
+    @PostMapping(value = "/rating", produces = "application/json", consumes = "application/json")
     @RequireValidHash
     public Response<RateResponse> rate(HttpServletRequest req, @RequestParam String hash, @RequestBody RateInput rateInput) throws ServiceException {
         try {
@@ -72,7 +82,7 @@ public class RatingController extends BaseController {
         }
     }
 
-    @PostMapping(value = "/review", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/rating/review", produces = "application/json", consumes = "application/json")
     @RequireValidHash
     public Response<Boolean> leaveBadReview(HttpServletRequest req, @RequestParam String hash, @RequestBody BadReviewInput badReviewInput) throws ServiceException {
         Review review = new Review();
@@ -92,7 +102,7 @@ public class RatingController extends BaseController {
         return new Response(new BadReviewOutput(review));
     }
 
-    @PostMapping(value = "/ack", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/rating/ack", produces = "application/json", consumes = "application/json")
     @RequireValidHash
     public Response<Boolean> acknowledgeLinkClicked(HttpServletRequest req, @RequestParam String hash) throws ServiceException {
         Review review = new Review();

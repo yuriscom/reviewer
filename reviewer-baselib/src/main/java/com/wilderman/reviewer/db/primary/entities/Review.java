@@ -1,6 +1,8 @@
 package com.wilderman.reviewer.db.primary.entities;
 
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.TypeDefs;
@@ -19,7 +21,9 @@ import java.util.Map;
 )
 @EntityListeners({AuditingEntityListener.class})
 @TypeDefs({@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)})
-public class Review {
+@Getter
+@Setter
+public class Review implements Hashable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
@@ -59,78 +63,6 @@ public class Review {
     @Column(name = "updated_at", nullable = false)
     @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Patient getPatient() {
-        return patient;
-    }
-
-    public void setPatient(Patient patient) {
-        this.patient = patient;
-    }
-
-    public Visit getVisit() {
-        return visit;
-    }
-
-    public void setVisit(Visit visit) {
-        this.visit = visit;
-    }
-
-    public Integer getRating() {
-        return rating;
-    }
-
-    public void setRating(Integer rating) {
-        this.rating = rating;
-    }
-
-    public String getHash() {
-        return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public Map<String, String> getData() {
-        return data;
-    }
-
-    public void setData(Map<String, String> data) {
-        this.data = data;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
 
     public String getReferenceNo() {
         return String.format("%0" + 5 + "d", getId());
