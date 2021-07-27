@@ -89,7 +89,7 @@ public class VisitorsService {
 
         VisitorFetchLog log = logOpt.get();
 
-        InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, "visitors/" + log.getS3key()));
+        InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, log.getS3key()));
         BufferedReader br = new BufferedReader(new InputStreamReader(stream));
 
         Map<String, PatientVisitRecord> patientsMap;
