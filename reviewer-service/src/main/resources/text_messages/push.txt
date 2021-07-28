@@ -1,1 +1,1 @@
-Hello %name%, please review
+Dear %name%, thank you for visiting Wilderman Cosmetic Clinic. Please rate your experience with us

@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "patient", schema = "public")
@@ -79,5 +80,15 @@ public class Patient implements IEntityId {
 
     public void setPreRatedStatus() {
         setStatus(PatientStatus.SENT);
+    }
+
+    public String getFullname() {
+        return String.format("%s %s", Optional.of(fname).orElse(""), Optional.of(lname).orElse(""));
+    }
+
+    public boolean hasName() {
+        boolean lastNameExists = lname != null && lname.length() > 0;
+        boolean firstNameExists = fname != null && fname.length() > 0;
+        return firstNameExists || lastNameExists;
     }
 }

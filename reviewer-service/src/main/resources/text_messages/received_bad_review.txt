@@ -1,2 +1,2 @@
-Dear %name%, we received your review, our customer care team is investigating. We will contact you as soon as possible.
-Your reference number is %refno%
+Dear %name%, we received your review. Our customer care team will investigate it. We will contact you as soon as possible.
+Your reference number is %refno%.

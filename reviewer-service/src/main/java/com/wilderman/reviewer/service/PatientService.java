@@ -58,7 +58,7 @@ public class PatientService {
     @Autowired
     MessageTextService messageTextService;
 
-//    private static final String testOhip = "12345";
+    //    private static final String testOhip = "12345";
     public static final Integer BAD_RATING_MAX = 3;
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
@@ -112,7 +112,7 @@ public class PatientService {
     public Patient pushNotification(Visit visit) throws ServiceException {
         Map<String, String> map = new HashMap<>();
         Patient patient = visit.getPatient();
-        map.put("name", patient.getOhip());
+        map.put("name", patient.hasName() ? patient.getFullname() : patient.getOhip());
         try {
             map.put("url", generateWebUrl(visit));
         } catch (Exception e) {
@@ -205,7 +205,7 @@ public class PatientService {
         visit.getPatient().setStatus(PatientStatus.LEFT_BAD_REVIEW);
 
         Map<String, String> map = new HashMap<>();
-        map.put("name", patient.getOhip());
+        map.put("name", patient.hasName() ? patient.getFullname() : patient.getOhip());
         map.put("refno", review.getReferenceNo());
         String msg = messageTextService.parse("received_bad_review", map);
 
