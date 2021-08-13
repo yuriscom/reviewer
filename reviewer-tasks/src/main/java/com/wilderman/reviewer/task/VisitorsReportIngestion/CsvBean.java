@@ -37,6 +37,14 @@ public class CsvBean {
         return patientVisitRecord;
     }
 
+    public static String sanitizePhone(String phone) {
+        String phoneSanitized = phone.replaceAll("[\\D]*", "");
+        if (phoneSanitized.length() == 10) {
+            phoneSanitized = "+1" + phoneSanitized;
+        }
+        return phoneSanitized;
+    }
+
     public String getOhip() {
         return ohip;
     }
@@ -58,7 +66,7 @@ public class CsvBean {
     }
 
     public void setPhone(String phone) {
-        this.phone = phone;
+        this.phone = sanitizePhone(phone);
     }
 
     public Date getVisitedOn() {

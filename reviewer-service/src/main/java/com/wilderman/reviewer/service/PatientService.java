@@ -1,5 +1,6 @@
 package com.wilderman.reviewer.service;
 
+import com.google.common.collect.Lists;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Review;
 import com.wilderman.reviewer.db.primary.entities.Visit;
@@ -62,6 +63,17 @@ public class PatientService {
     public static final Integer BAD_RATING_MAX = 3;
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @Transactional
+    public String initPatientByPhoneForTest(String phoneNumber) throws ServiceException {
+        String phoneStandardized = phoneNumberService.standardize(phoneNumber);
+        List<Patient> patientList = patientRepository.findAllByPhoneIn(Lists.newArrayList(phoneStandardized));
+        if (patientList.size() == 0) {
+            throw new ServiceException("Patient with phone " + phoneStandardized + " was not found");
+        }
+
+        return initPatientForTest(phoneStandardized, patientList.get(0).getId());
+    }
 
     @Transactional
     public String initPatientForTest(String phoneNumber, Long id) throws ServiceException {
