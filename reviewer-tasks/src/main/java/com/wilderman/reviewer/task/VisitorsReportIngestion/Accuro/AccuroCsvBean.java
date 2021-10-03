@@ -1,38 +1,46 @@
-package com.wilderman.reviewer.task.VisitorsReportIngestion;
+package com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro;
 
 import com.opencsv.bean.CsvBindByName;
 import com.opencsv.bean.CsvDate;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.ICsvBean;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.PatientVisitRecord;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.sql.Date;
-import java.text.ParseException;
+import java.util.Arrays;
 
-public class CsvBean {
+@Getter
+@Setter
+public class AccuroCsvBean implements ICsvBean {
 
-    @CsvBindByName(column = "OHIP")
-    private String ohip;
+    @CsvBindByName(column = "Last Name")
+    private String lastName;
+
+    @CsvBindByName(column = "First Name")
+    private String firstName;
 
     @CsvBindByName(column = "Birthdate")
     @CsvDate(value = "MM/dd/yyyy")
     private Date birthdate;
 
-    @CsvBindByName(column = "Phone")
+    @CsvBindByName(column = "Cell Phone")
     private String phone;
+
+    private String fullname;
 
     @CsvBindByName(column = "Appointment Date")
     @CsvDate(value = "MM/dd/yyyy")
     private Date visitedOn;
 
-    @CsvBindByName(column = "Email Address")
-    private String email;
 
     public PatientVisitRecord toPatientVisitRecord() {
         PatientVisitRecord patientVisitRecord = new PatientVisitRecord();
         patientVisitRecord.setBirthdate(getBirthdate());
-        patientVisitRecord.setEmail(getEmail());
-        patientVisitRecord.setOhip(getOhip());
         patientVisitRecord.setPhone(getPhone());
         patientVisitRecord.setVisitedOn(getVisitedOn());
-
+        patientVisitRecord.setFname(firstName);
+        patientVisitRecord.setLname(lastName);
 
         return patientVisitRecord;
     }
@@ -45,13 +53,6 @@ public class CsvBean {
         return phoneSanitized;
     }
 
-    public String getOhip() {
-        return ohip;
-    }
-
-    public void setOhip(String ohip) {
-        this.ohip = ohip;
-    }
 
     public Date getBirthdate() {
         return birthdate;
@@ -77,11 +78,7 @@ public class CsvBean {
         this.visitedOn = visitedOn;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public String getFullname() {
+        return String.format("%s %s", firstName, lastName);
     }
 }

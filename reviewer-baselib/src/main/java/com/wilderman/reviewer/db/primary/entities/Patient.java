@@ -83,7 +83,7 @@ public class Patient implements IEntityId {
     }
 
     public String getFullname() {
-        return String.format("%s %s", Optional.of(fname).orElse(""), Optional.of(lname).orElse(""));
+        return String.format("%s %s", Optional.ofNullable(fname).orElse(""), Optional.ofNullable(lname).orElse(""));
     }
 
     public boolean hasName() {
