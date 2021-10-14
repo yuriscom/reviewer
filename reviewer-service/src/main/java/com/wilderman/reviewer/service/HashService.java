@@ -28,6 +28,9 @@ public class HashService {
     @Autowired
     ReviewRepository reviewRepository;
 
+    @Autowired
+    ClientService clientService;
+
     public String md5String(Patient patient) throws NoSuchAlgorithmException {
         //MessageDigest md = MessageDigest.getInstance("MD5");
 
@@ -95,12 +98,16 @@ public class HashService {
         return hashVisits.stream()
                 .filter(e -> md5StringExceptionSuppressed(e.getPatient()).equals(hashParts[0]))
                 .findFirst()
+                .filter(e -> clientService.getClient().equals(e.getPatient().getClient()))
                 .orElse(null);
     }
 
     @Transactional
     public Review getReviewByVisitHash(String fullHashEncoded) throws Exception {
         Visit visit = getVisitByHash(fullHashEncoded);
+        if (visit == null) {
+            return null;
+        }
         return reviewRepository.findByVisitAndPatient(visit, visit.getPatient());
     }
 

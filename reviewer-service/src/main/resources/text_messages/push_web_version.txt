@@ -1,1 +1,1 @@
-Dear %name%, thank you for visiting Wilderman Cosmetic Clinic. Please rate your experience with us here: %url%
+Dear %name%, thank you for visiting %clinic_name%. Please rate your experience with us here: %url%

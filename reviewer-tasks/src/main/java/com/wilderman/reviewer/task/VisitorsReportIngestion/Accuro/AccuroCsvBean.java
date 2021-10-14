@@ -21,7 +21,8 @@ public class AccuroCsvBean implements ICsvBean {
     private String firstName;
 
     @CsvBindByName(column = "Birthdate")
-    @CsvDate(value = "MM/dd/yyyy")
+//    @CsvDate(value = "MM/dd/yyyy")
+    @CsvDate(value = "yyyy-MM-dd")
     private Date birthdate;
 
     @CsvBindByName(column = "Cell Phone")
@@ -30,7 +31,8 @@ public class AccuroCsvBean implements ICsvBean {
     private String fullname;
 
     @CsvBindByName(column = "Appointment Date")
-    @CsvDate(value = "MM/dd/yyyy")
+//    @CsvDate(value = "MM/dd/yyyy")
+    @CsvDate(value = "yyyy-MM-dd")
     private Date visitedOn;
 
 

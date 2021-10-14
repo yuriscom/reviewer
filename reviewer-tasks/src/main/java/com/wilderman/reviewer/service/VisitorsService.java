@@ -3,12 +3,14 @@ package com.wilderman.reviewer.service;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
+import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitorFetchLogStatus;
+import com.wilderman.reviewer.db.primary.repository.ClientRepository;
 import com.wilderman.reviewer.db.primary.repository.PatientRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitorFetchLogRepository;
@@ -28,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -68,6 +71,9 @@ public class VisitorsService {
     PatientRepository patientRepository;
 
     @Autowired
+    ClientRepository clientRepository;
+
+    @Autowired
     MessageTextService messageTextService;
 
     @Autowired
@@ -76,13 +82,30 @@ public class VisitorsService {
     @Value("${spring.profiles.active:accuro}")
     private String activeProfile;
 
+    @Value("${s3.visitorsMainFolder:visitors}")
+    private String s3bucket;
+
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    private Client client;
+    private String s3Prefix;
+
+    @PostConstruct
+    public void init() {
+        client = clientRepository.findFirstByUname(activeProfile);
+        s3Prefix = String.format("%s/%s", s3bucket, Optional.ofNullable(client).orElse(new Client()).getUname());
+    }
 
     @Transactional
     public Integer ingestData() throws Exception {
 
+        Optional.ofNullable(client)
+                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
+
+//        Optional<VisitorFetchLog> logOpt = visitorFetchLogRepository
+//                .findTopByStatusAndNumRecordsGreaterThanOrderByCreatedAtAsc(VisitorFetchLogStatus.PENDING, 0);
         Optional<VisitorFetchLog> logOpt = visitorFetchLogRepository
-                .findTopByStatusAndNumRecordsGreaterThanOrderByCreatedAtAsc(VisitorFetchLogStatus.PENDING, 0);
+                .findNextToProcess(VisitorFetchLogStatus.PENDING, s3Prefix);
 
         if (!logOpt.isPresent()) {
             return 0;
@@ -105,7 +128,7 @@ public class VisitorsService {
             return 0;
         }
 
-        List<Patient> existingPatients = patientRepository.findAllByPhoneIn(new HashSet<>(patientsMap.keySet()));
+        List<Patient> existingPatients = patientRepository.findAllByPhoneInAndClient(new HashSet<>(patientsMap.keySet()), client);
         List<Visit> visits = new ArrayList<>();
 
         for (Patient existingPatient : existingPatients) {
@@ -124,6 +147,7 @@ public class VisitorsService {
 
         for (PatientVisitRecord patientVisitRecord : patientsMap.values()) {
             Patient newPatient = mapper.map(patientVisitRecord, Patient.class);
+            newPatient.setClient(client);
             newPatient.setHash(RandomString.generateRandomString(8));
             Visit visit = new Visit(newPatient, patientVisitRecord.getVisitedOn(), log);
             visit.setHash(RandomString.generateRandomString(8));
@@ -222,9 +246,12 @@ public class VisitorsService {
     @Transactional
     public boolean scanVisitorsAndSendMessages() throws Exception {
 
-        List<Long> logIdsToUpdate = visitRepository.findUnprocessedLogs();
+        Optional.ofNullable(client)
+                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
+
+        List<Long> logIdsToUpdate = visitRepository.findUnprocessedLogsForClient(client.getId());
 //        List<Patient> patientsJoined = patientRepository.xxx("NEW");
-        List<Patient> patientsJoined = patientRepository.findAllUnprocessed(PatientStatus.unprocessed());
+        List<Patient> patientsJoined = patientRepository.findAllUnprocessed(PatientStatus.unprocessed(), client.getId());
 
         Set<Patient> patients = new HashSet<>(patientsJoined);
 

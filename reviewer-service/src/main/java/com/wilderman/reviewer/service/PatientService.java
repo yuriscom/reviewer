@@ -35,9 +35,6 @@ public class PatientService {
     @Value("${web.url}")
     private String url;
 
-    @Value("${client.link.google}")
-    private String linkGoogle;
-
     @Autowired
     PatientRepository patientRepository;
 
@@ -55,6 +52,9 @@ public class PatientService {
 
     @Autowired
     LambdaService lambdaService;
+
+    @Autowired
+    ClientService clientService;
 
     @Autowired
     MessageTextService messageTextService;
@@ -125,6 +125,7 @@ public class PatientService {
         Map<String, String> map = new HashMap<>();
         Patient patient = visit.getPatient();
         map.put("name", patient.hasName() ? patient.getFullname() : patient.getOhip());
+        map.put("clinic_name", clientService.getClient().getName());
         try {
             map.put("url", generateWebUrl(visit));
         } catch (Exception e) {
@@ -185,6 +186,7 @@ public class PatientService {
 
     public String generateReviewLink(String hash) {
         String redirectTo = "";
+        String linkGoogle = clientService.getClient().getLinkGoogle();
         try {
             redirectTo = URLEncoder.encode(linkGoogle, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {

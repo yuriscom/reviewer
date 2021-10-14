@@ -1,11 +1,9 @@
 package com.wilderman.reviewer;
 
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.thymeleaf.ThymeleafAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication(exclude = {ThymeleafAutoConfiguration.class})
@@ -13,6 +11,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @EnableCaching
 //@PropertySource("classpath:ldap-${spring.profiles.active}.properties", "classpath:quartz-${spring.profiles.active}.properties", "classpath:etc-${spring.profiles.active}.properties")
 public class Application {
+
     public static void main(String[] args) {
         SpringApplicationBuilder builder = new SpringApplicationBuilder();
 

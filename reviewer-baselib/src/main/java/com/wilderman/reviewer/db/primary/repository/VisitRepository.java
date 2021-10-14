@@ -16,6 +16,9 @@ public interface VisitRepository extends ExtendedRepository<Visit, Long>, Custom
     @Query(value = "select distinct log_id from visit where status='PENDING'", nativeQuery = true)
     ArrayList<Long> findUnprocessedLogs();
 
+    @Query(value = "select distinct log_id from visit join patient on patient.id=visit.patient_id where visit.status='PENDING' and patient.client_id=:clientId", nativeQuery = true)
+    ArrayList<Long> findUnprocessedLogsForClient(@Param("clientId") Long clientId);
+
 
     @Modifying
     @Query("update Visit v set v.status = 'PROCESSED' where v.status = 'PENDING' and log_id in (:logIds)")
