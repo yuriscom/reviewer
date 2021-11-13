@@ -88,6 +88,7 @@ public class HashService {
     }
 
     public Visit getVisitByHash(String fullHashEncoded) throws Exception {
+
         String[] hashParts = getHashParts(fullHashEncoded);
 
         String hash = hashParts[1];
@@ -98,7 +99,7 @@ public class HashService {
         return hashVisits.stream()
                 .filter(e -> md5StringExceptionSuppressed(e.getPatient()).equals(hashParts[0]))
                 .findFirst()
-                .filter(e -> clientService.getClient().equals(e.getPatient().getClient()))
+                .filter(e -> clientService.getClient().getId().equals(e.getPatient().getClient().getId()))
                 .orElse(null);
     }
 

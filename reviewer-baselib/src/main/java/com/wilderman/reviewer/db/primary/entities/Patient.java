@@ -55,7 +55,7 @@ public class Patient implements IEntityId {
     private String hash;
 
     @Column(name = "sample_id")
-    private Integer sampleId = 2;
+    private Integer sampleId = 3;
 
     @Column(name = "created_at", nullable = false)
     @CreatedDate
@@ -65,7 +65,7 @@ public class Patient implements IEntityId {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "patient__client__fk", value = ConstraintMode.CONSTRAINT))
     private Client client;
 

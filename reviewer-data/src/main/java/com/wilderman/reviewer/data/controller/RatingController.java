@@ -9,6 +9,7 @@ import com.wilderman.reviewer.db.primary.entities.Review;
 import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.dto.SmsResponseHandlerInput;
 import com.wilderman.reviewer.dto.SmsResponseHandlerOutput;
+import com.wilderman.reviewer.dto.StepData;
 import com.wilderman.reviewer.dto.response.Response;
 import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
@@ -42,13 +43,13 @@ public class RatingController extends BaseController {
     @GetMapping(value = "/step")
     @RequireValidHash
     public Response<StepOutput> validateHash(HttpServletRequest req, @RequestParam String hash) throws Exception {
-        Step step = stepService.getByHash(hash);
+        StepData stepData = stepService.generateStepData(hash);
 
-        if (step == null) {
+        if (stepData == null || stepData.getStep() == null) {
             throw new ServiceException("Hash is invalid");
         }
 
-        return new Response<>(new StepOutput(step));
+        return new Response<>(new StepOutput(stepData));
     }
 
     @PostMapping(value = "/rating", produces = "application/json", consumes = "application/json")

@@ -11,7 +11,6 @@ import com.wilderman.reviewer.db.primary.repository.ReviewRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
 import com.wilderman.reviewer.dto.PublishSmsInput;
 import com.wilderman.reviewer.dto.PublishSmsOutput;
-import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +132,19 @@ public class PatientService {
             throw new ServiceException("Could not generate web url for patient " + patient.getId());
         }
 
-        String templateName = patient.getSampleId() == 1 ? "push" : "push_web_version";
+        String templateName;
+        switch (patient.getSampleId()) {
+            case 1:
+                templateName = "push";
+                break;
+            case 2:
+                templateName = "push_web_version";
+                break;
+            case 3:
+            default:
+                templateName = "push_direct_version";
+                break;
+        }
 
         String msg = messageTextService.parse(templateName, map);
         String phone = patient.getPhone();
@@ -156,9 +167,9 @@ public class PatientService {
     public Review ack(Review review) throws ServiceException {
         Visit visit = review.getVisit();
         Patient patient = visit.getPatient();
-        boolean isPatientOk = patient.getStatus().equals(PatientStatus.RATED);
-        boolean isVisitOk = visit.getStatus().equals(VisitStatus.RATED);
-        boolean isReviewOk = isReviewPositive(review);
+        boolean isPatientOk = patient.getSampleId().equals(3) || patient.getStatus().equals(PatientStatus.RATED);
+        boolean isVisitOk = patient.getSampleId().equals(3) || visit.getStatus().equals(VisitStatus.RATED);
+        boolean isReviewOk = patient.getSampleId().equals(3) || isReviewPositive(review);
 
         if (!(isPatientOk && isVisitOk && isReviewOk)) {
             throw new ServiceException("Invalid step");

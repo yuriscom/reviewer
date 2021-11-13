@@ -56,28 +56,8 @@ public class AccuroCsvBean implements ICsvBean {
     }
 
 
-    public Date getBirthdate() {
-        return birthdate;
-    }
-
-    public void setBirthdate(Date birthdate) {
-        this.birthdate = birthdate;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
     public void setPhone(String phone) {
         this.phone = sanitizePhone(phone);
-    }
-
-    public Date getVisitedOn() {
-        return visitedOn;
-    }
-
-    public void setVisitedOn(Date visitedOn) {
-        this.visitedOn = visitedOn;
     }
 
     public String getFullname() {

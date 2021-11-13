@@ -15,37 +15,43 @@ import java.util.Arrays;
 @Setter
 public class CosmeticCsvBean implements ICsvBean {
 
-    @CsvBindByName(column = "OHIP")
-    private String ohip;
+//    @CsvBindByName(column = "OHIP")
+//    private String ohip;
 
-    @CsvBindByName(column = "Birthdate")
-    @CsvDate(value = "MM/dd/yyyy")
-    private Date birthdate;
+//    @CsvBindByName(column = "Birthdate")
+//    @CsvDate(value = "MM/dd/yyyy")
+//    private Date birthdate;
 
     @CsvBindByName(column = "Phone")
     private String phone;
 
+    @CsvBindByName(column = "Last Name")
+    private String lastName;
+
+    @CsvBindByName(column = "First Name")
+    private String firstName;
+
     @CsvBindByName(column = "Client Name")
     private String fullname;
 
-    @CsvBindByName(column = "Appointment Date")
-    @CsvDate(value = "MM/dd/yyyy")
-    private Date visitedOn;
-
-    @CsvBindByName(column = "Last Visit")
-    @CsvDate(value = "MM/dd/yyyy")
+    @CsvBindByName(column = "Date Visited")
+    @CsvDate(value = "yyyy-MM-dd")
     private Date lastVisit;
 
-    @CsvBindByName(column = "Email Address")
-    private String email;
+//    @CsvBindByName(column = "Email Address")
+//    private String email;
 
     public PatientVisitRecord toPatientVisitRecord() {
         PatientVisitRecord patientVisitRecord = new PatientVisitRecord();
-        patientVisitRecord.setBirthdate(getBirthdate());
-        patientVisitRecord.setEmail(getEmail());
-        patientVisitRecord.setOhip(getOhip());
+//        patientVisitRecord.setBirthdate(getBirthdate());
+//        patientVisitRecord.setEmail(getEmail());
+//        patientVisitRecord.setOhip(getOhip());
         patientVisitRecord.setPhone(getPhone());
-        patientVisitRecord.setVisitedOn(getVisitedOn() != null ? getVisitedOn() : getLastVisit());
+        patientVisitRecord.setVisitedOn(getLastVisit());
+
+        patientVisitRecord.setFname(firstName);
+        patientVisitRecord.setLname(lastName);
+        /*
         if (fullname != null) {
             String[] nameParts = fullname.split("\\s+");
             if (nameParts.length > 0) {
@@ -56,9 +62,14 @@ public class CosmeticCsvBean implements ICsvBean {
                 }
             }
         }
+         */
 
 
         return patientVisitRecord;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = sanitizePhone(phone);
     }
 
     public static String sanitizePhone(String phone) {
@@ -69,59 +80,4 @@ public class CosmeticCsvBean implements ICsvBean {
         return phoneSanitized;
     }
 
-    public String getOhip() {
-        return ohip;
-    }
-
-    public void setOhip(String ohip) {
-        this.ohip = ohip;
-    }
-
-    public Date getBirthdate() {
-        return birthdate;
-    }
-
-    public void setBirthdate(Date birthdate) {
-        this.birthdate = birthdate;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = sanitizePhone(phone);
-    }
-
-    public Date getVisitedOn() {
-        return visitedOn;
-    }
-
-    public void setVisitedOn(Date visitedOn) {
-        this.visitedOn = visitedOn;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getFullname() {
-        return fullname;
-    }
-
-    public void setFullname(String fullname) {
-        this.fullname = fullname;
-    }
-
-    public Date getLastVisit() {
-        return lastVisit;
-    }
-
-    public void setLastVisit(Date lastVisit) {
-        this.lastVisit = lastVisit;
-    }
 }
