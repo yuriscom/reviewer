@@ -197,7 +197,7 @@ public class PatientService {
 
     public String generateReviewLink(String hash) {
         String redirectTo = "";
-        String linkGoogle = clientService.getClient().getLinkGoogle();
+        String linkGoogle = clientService.getClient().getLinkGoogleMobile();
         try {
             redirectTo = URLEncoder.encode(linkGoogle, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {

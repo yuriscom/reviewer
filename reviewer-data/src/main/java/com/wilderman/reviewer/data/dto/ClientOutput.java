@@ -13,7 +13,7 @@ public class ClientOutput {
     private String uname;
     private String name;
     private String website;
-    private String linkGoogle;
+    private String linkGoogleMobile;
     private String logo;
 
     public ClientOutput(Client client) {
@@ -21,7 +21,7 @@ public class ClientOutput {
         uname = client.getUname();
         name = client.getName();
         website = client.getWebsite();
-        linkGoogle = client.getLinkGoogle();
+        linkGoogleMobile = client.getLinkGoogleMobile();
         logo = client.getLogo();
     }
 }

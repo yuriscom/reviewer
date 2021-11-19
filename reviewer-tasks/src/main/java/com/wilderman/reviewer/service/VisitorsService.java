@@ -210,6 +210,7 @@ public class VisitorsService {
             map = beans.stream()
                     .filter(bean -> bean.getPhone()!= null && bean.getPhone().length() > 0)
                     .map(bean -> bean.toPatientVisitRecord())
+                    .distinct()
                     .collect(Collectors.toMap(e -> e.getPhone(), e -> e));
         } catch (Exception e) {
             e.printStackTrace();

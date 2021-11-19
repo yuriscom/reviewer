@@ -1,9 +1,13 @@
 package com.wilderman.reviewer.task.VisitorsReportIngestion;
 
-import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
+import java.util.Objects;
 
+@Getter
+@Setter
 public class PatientVisitRecord {
     private String fname;
     private String lname;
@@ -13,60 +17,16 @@ public class PatientVisitRecord {
     private Date birthdate;
     private String email;
 
-
-    public String getFname() {
-        return fname;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PatientVisitRecord that = (PatientVisitRecord) o;
+        return Objects.equals(phone, that.phone);
     }
 
-    public void setFname(String fname) {
-        this.fname = fname;
-    }
-
-    public String getLname() {
-        return lname;
-    }
-
-    public void setLname(String lname) {
-        this.lname = lname;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public Date getVisitedOn() {
-        return visitedOn;
-    }
-
-    public void setVisitedOn(Date visitedOn) {
-        this.visitedOn = visitedOn;
-    }
-
-    public String getOhip() {
-        return ohip;
-    }
-
-    public void setOhip(String ohip) {
-        this.ohip = ohip;
-    }
-
-    public Date getBirthdate() {
-        return birthdate;
-    }
-
-    public void setBirthdate(Date birthdate) {
-        this.birthdate = birthdate;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    @Override
+    public int hashCode() {
+        return Objects.hash(phone);
     }
 }

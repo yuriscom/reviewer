@@ -41,8 +41,8 @@ public class AccuroCsvBean implements ICsvBean {
         patientVisitRecord.setBirthdate(getBirthdate());
         patientVisitRecord.setPhone(getPhone());
         patientVisitRecord.setVisitedOn(getVisitedOn());
-        patientVisitRecord.setFname(firstName);
-        patientVisitRecord.setLname(lastName);
+        patientVisitRecord.setFname(sanitizeName(firstName));
+        patientVisitRecord.setLname(sanitizeName(lastName));
 
         return patientVisitRecord;
     }

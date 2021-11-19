@@ -49,8 +49,8 @@ public class CosmeticCsvBean implements ICsvBean {
         patientVisitRecord.setPhone(getPhone());
         patientVisitRecord.setVisitedOn(getLastVisit());
 
-        patientVisitRecord.setFname(firstName);
-        patientVisitRecord.setLname(lastName);
+        patientVisitRecord.setFname(sanitizeName(firstName));
+        patientVisitRecord.setLname(sanitizeName(lastName));
         /*
         if (fullname != null) {
             String[] nameParts = fullname.split("\\s+");

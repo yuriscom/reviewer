@@ -32,8 +32,11 @@ public class Client implements IEntityId {
     @Column(name = "website")
     private String website;
 
-    @Column(name = "link_google")
-    private String linkGoogle;
+    @Column(name = "link_google_mobile")
+    private String linkGoogleMobile;
+
+    @Column(name = "link_google_desktop")
+    private String linkGoogleDesktop;
 
     @Column(name = "email", length = 255)
     private String email;

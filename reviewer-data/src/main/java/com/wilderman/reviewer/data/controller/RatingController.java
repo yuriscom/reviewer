@@ -40,10 +40,22 @@ public class RatingController extends BaseController {
     @Autowired
     StepService stepService;
 
-    @GetMapping(value = "/step")
+//    @GetMapping(value = "/step")
+//    @RequireValidHash
+//    public Response<StepOutput> validateHash(HttpServletRequest req, @RequestParam String hash) throws Exception {
+//        StepData stepData = stepService.generateStepData(hash);
+//
+//        if (stepData == null || stepData.getStep() == null) {
+//            throw new ServiceException("Hash is invalid");
+//        }
+//
+//        return new Response<>(new StepOutput(stepData));
+//    }
+
+    @PostMapping(value = "/step", produces = "application/json", consumes = "application/json")
     @RequireValidHash
-    public Response<StepOutput> validateHash(HttpServletRequest req, @RequestParam String hash) throws Exception {
-        StepData stepData = stepService.generateStepData(hash);
+    public Response<StepOutput> step(HttpServletRequest req, @RequestParam String hash, @RequestBody StepInput stepInput) throws Exception {
+        StepData stepData = stepService.generateStepData(hash, stepInput.getUserAgent());
 
         if (stepData == null || stepData.getStep() == null) {
             throw new ServiceException("Hash is invalid");

@@ -5,6 +5,9 @@ import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.dto.StepData;
 import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
+import com.wilderman.reviewer.utils.UAgentInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +23,9 @@ public class StepService {
     @Autowired
     ClientService clientService;
 
-    public StepData generateStepData(String hash) {
+    protected final Logger LOG = LoggerFactory.getLogger(this.getClass());
+
+    public StepData generateStepData(String hash, String userAgent) {
         StepData stepData = new StepData();
 
         Visit visit;
@@ -34,9 +39,17 @@ public class StepService {
             return null;
         }
 
+        LOG.info("patient " + visit.getPatient().getId() + " with sample " + visit.getPatient().getSampleId());
+
         if (visit.getPatient().getSampleId().equals(3)) {
+            UAgentInfo agentInfo = new UAgentInfo(userAgent, "");
+            boolean isMobile = agentInfo.detectMobileLong();
+
             stepData.setStep(Step.FORWARD);
-            stepData.setForwardToUrl(clientService.getClient().getLinkGoogle());
+            stepData.setForwardToUrl(isMobile ?
+                    clientService.getClient().getLinkGoogleMobile()
+                    : clientService.getClient().getLinkGoogleDesktop()
+            );
 
             Review autoReview = new Review();
             autoReview.setVisit(visit);
