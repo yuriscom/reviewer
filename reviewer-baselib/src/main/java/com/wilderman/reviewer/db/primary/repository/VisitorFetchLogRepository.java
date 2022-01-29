@@ -2,6 +2,8 @@ package com.wilderman.reviewer.db.primary.repository;
 
 import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitorFetchLogStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,5 +24,6 @@ public interface VisitorFetchLogRepository extends ExtendedRepository<VisitorFet
 
     Optional<VisitorFetchLog> getTopByStatusAndCreatedAtAfterOrderByCreatedAtAsc(VisitorFetchLogStatus status, LocalDateTime lastCreatedAt);
 
+    Page<VisitorFetchLog> findByS3keyStartsWith(String prefix, Pageable pageable);
 
 }

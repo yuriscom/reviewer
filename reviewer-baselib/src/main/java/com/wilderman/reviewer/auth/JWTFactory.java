@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -22,6 +23,12 @@ public class JWTFactory {
     @Value("${auth0.config.jwtSecret:one two three}")
     private String jwtSecret;
 
+    @Value("${com.auth0.domain}")
+    private String domain;
+
+    @Value("${com.auth0.pubkey}")
+    private String pubkeyPath;
+
     @Autowired
     private final JWTVerifier verify = null;
 
@@ -29,19 +36,27 @@ public class JWTFactory {
 //    SessionManager sessionManager;
 
     @Bean
-    public JWTVerifier createVerifier() {
+    public JWTVerifier createVerifier() throws Exception {
         Algorithm algorithm = createAlgorithm();
+
         return JWT.require(algorithm)
-                .withIssuer("auth0")
+                .withIssuer(String.format("https://%s/", domain))
                 .acceptExpiresAt(1)
                 .acceptLeeway(1)
                 .acceptIssuedAt(1)
                 .build();
     }
 
-    public Algorithm createAlgorithm() {
-        return Algorithm.HMAC256(jwtSecret);
+    //    public Algorithm createAlgorithm() {
+//        return Algorithm.HMAC256(jwtSecret);
+//    }
+
+    public Algorithm createAlgorithm() throws Exception {
+        RSAPublicKey publicKey = (RSAPublicKey) PemUtils.readPublicKeyFromFile(pubkeyPath, "RSA");
+        Algorithm algorithm = Algorithm.RSA256(publicKey, null);
+        return algorithm;
     }
+
 
     public String getToken(Tokens tokens, String userId, String authToken) throws ServiceException {
         try {
@@ -61,8 +76,11 @@ public class JWTFactory {
                     .withClaim("type", tokens.getType())
                     .withClaim("authToken", authToken)
                     .sign(algorithm);
-        } catch (JWTCreationException e){
+        } catch (JWTCreationException e) {
             //Invalid Signing configuration / Couldn't convert Claims.
+            throw new ServiceException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
             throw new ServiceException(e);
         }
     }

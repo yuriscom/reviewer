@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Review;
 import com.wilderman.reviewer.db.primary.entities.Visit;
+import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
 import com.wilderman.reviewer.db.primary.repository.PatientRepository;
@@ -16,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -244,6 +247,12 @@ public class PatientService {
         return review;
         //return reviewRepository.save(review);
     }
+
+
+    public Page<Patient> getPatientsByLog(VisitorFetchLog log, Pageable pageable) {
+        return patientRepository.findByLogWithPagination(log, pageable);
+    }
+
 
 //    public Boolean verifyStep(Step step, Visit visit) {
 //        List<Boolean> conditions = new ArrayList<>();

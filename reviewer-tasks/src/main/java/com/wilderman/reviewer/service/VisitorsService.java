@@ -243,6 +243,36 @@ public class VisitorsService {
 //        return map;
 //    }
 
+    @Transactional
+    public boolean resendVisitorsByLogId(Long logId) throws Exception {
+
+        Optional.ofNullable(client)
+                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
+
+        VisitorFetchLog log = visitorFetchLogRepository.findById(logId)
+                .orElseThrow(() -> new Exception("Log not found for log " + logId));
+
+        List<Patient> patients = patientRepository.findAllToResend(log, client.getId());
+
+        if (patients.size() == 0) {
+            return false;
+        }
+
+        for (Patient patient : patients) {
+            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.PROCESSED)).findFirst().orElse(null);
+            if (visit == null) {
+                // should not be here because query above will select only the ones with visit status new
+            }
+            try {
+                patientService.pushNotification(visit);
+            } catch (ServiceException e) {
+                continue;
+            }
+        }
+
+        return true;
+    }
+
 
     @Transactional
     public boolean scanVisitorsAndSendMessages() throws Exception {

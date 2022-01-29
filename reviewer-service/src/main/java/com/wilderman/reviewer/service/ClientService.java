@@ -2,8 +2,11 @@ package com.wilderman.reviewer.service;
 
 import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.repository.ClientRepository;
+import com.wilderman.reviewer.dto.response.PageableResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -26,5 +29,13 @@ public class ClientService {
 
     public Client getClient() {
         return client;
+    }
+
+    public Client getClient(Long id) {
+        return clientRepository.getOne(id);
+    }
+
+    public Page<Client> getClients(Pageable pageable) {
+        return clientRepository.findAll(pageable);
     }
 }
