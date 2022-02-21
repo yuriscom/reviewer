@@ -46,9 +46,6 @@ public class Visit implements Hashable {
     @Column(name = "visited_on", nullable = false)
     private Date visitedOn;
 
-    @Column(name = "attempts", nullable = false)
-    private Integer attempts = 0;
-
     @Type(type = "jsonb")
     @Column(columnDefinition = "jsonb", name = "data")
     private Map<String, String> data = new HashMap<>();

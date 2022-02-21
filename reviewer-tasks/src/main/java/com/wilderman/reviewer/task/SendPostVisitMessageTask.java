@@ -27,7 +27,7 @@ public class SendPostVisitMessageTask extends BaseTask {
         LOG.info("[{}] start ... ", processor);
         LocalDateTime begin = LocalDateTime.now();
 
-        visitorsService.scanVisitorsAndSendMessages();
+//        visitorsService.scanVisitorsAndSendMessages();
 
 
         LocalDateTime end = LocalDateTime.now();

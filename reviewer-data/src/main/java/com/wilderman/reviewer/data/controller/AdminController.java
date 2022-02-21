@@ -8,9 +8,13 @@ import com.wilderman.reviewer.data.dto.admin.AdminPatientOutput;
 import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
+import com.wilderman.reviewer.dto.FetchLogData;
 import com.wilderman.reviewer.dto.response.PageableResponse;
+import com.wilderman.reviewer.dto.response.Response;
+import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.service.ClientService;
 import com.wilderman.reviewer.service.PatientService;
+import com.wilderman.reviewer.service.VisitorFetchLogService;
 import com.wilderman.reviewer.service.VisitorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
@@ -39,6 +44,9 @@ public class AdminController {
 
     @Autowired
     PatientService patientService;
+
+    @Autowired
+    VisitorFetchLogService visitorFetchLogService;
 
     private static final int ROWS_PER_PAGE = 10;
 
@@ -133,4 +141,18 @@ public class AdminController {
         }
         return new PageableResponse<>(patientsPage, res);
     }
+
+
+    @PostMapping(value = "logs/{id}/push")
+    @RequireValidAdmin
+    public Response<List<AdminPatientOutput>> sendPushNotification(HttpServletRequest req, @PathVariable Long id) throws ServiceException {
+        List<Patient> patientsAffected = patientService.sendMessagesForLog(id);
+
+        List<AdminPatientOutput> patients = patientsAffected.stream()
+                .map(patient -> new AdminPatientOutput(patient))
+                .collect(Collectors.toList());
+
+        return new Response<>(patients);
+    }
+
 }

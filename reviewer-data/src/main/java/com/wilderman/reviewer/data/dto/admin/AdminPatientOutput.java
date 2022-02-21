@@ -23,7 +23,8 @@ public class AdminPatientOutput {
     private String phone;
     private PatientStatus status;
     private Date lastVisitedOn;
-    private List<Review> reviews;
+    private boolean sendable = false;
+    private Integer attempts;
 
     public AdminPatientOutput(Patient patient) {
         id = patient.getId();
@@ -32,6 +33,7 @@ public class AdminPatientOutput {
         phone = patient.getPhone();
         status = patient.getStatus();
         lastVisitedOn = patient.getVisits().stream().findFirst().get().getVisitedOn();
-
+        sendable = PatientStatus.sendable().contains(patient.getStatus()) && patient.getAttempts() < 3;
+        attempts = patient.getAttempts();
     }
 }

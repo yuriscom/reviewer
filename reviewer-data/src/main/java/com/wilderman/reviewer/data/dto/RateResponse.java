@@ -14,8 +14,8 @@ public class RateResponse {
     private String reviewLink;
     private boolean isRated;
 
-//    public void setRatedInt(Integer statusCode) {
-//        isRated = statusCode == 200 ? true : false;
+//    public void setRatedInt(Integer status) {
+//        isRated = status == 200 ? true : false;
 //    }
 
 }

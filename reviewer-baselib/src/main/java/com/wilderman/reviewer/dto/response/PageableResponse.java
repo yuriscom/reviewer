@@ -8,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 public class PageableResponse<S, T> implements IPageableResponse<T> {
-	private int statusCode;
+	private int status;
 	private String error;
 
 	private PageableMetaResponse pageInfo;
@@ -16,7 +16,7 @@ public class PageableResponse<S, T> implements IPageableResponse<T> {
 
 	public PageableResponse() {
 		super();
-		this.statusCode = 200;
+		this.status = 200;
 	}
 
 	public PageableResponse(Page<S> page, List<T> data) {
@@ -33,9 +33,9 @@ public class PageableResponse<S, T> implements IPageableResponse<T> {
 		this.pageInfo = new PageableMetaResponse(page.getPageable(), page.getTotalElements(), data.size());
 	}
 	
-	public PageableResponse(int statusCode, String error, List<T> data) {
+	public PageableResponse(int status, String error, List<T> data) {
 		this();
-		this.statusCode = statusCode;
+		this.status = status;
 		this.error = error;
 		this.data = data;
 	}
@@ -89,12 +89,12 @@ public class PageableResponse<S, T> implements IPageableResponse<T> {
 		}
 	}
 
-	public int getStatusCode() {
-		return statusCode;
+	public int getStatus() {
+		return status;
 	}
 
-	public void setStatusCode(int statusCode) {
-		this.statusCode = statusCode;
+	public void setStatus(int status) {
+		this.status = status;
 	}
 
 	public String getError() {

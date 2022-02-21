@@ -1,18 +1,16 @@
 package com.wilderman.reviewer.service;
 
 import com.google.common.collect.Lists;
-import com.wilderman.reviewer.db.primary.entities.Patient;
-import com.wilderman.reviewer.db.primary.entities.Review;
-import com.wilderman.reviewer.db.primary.entities.Visit;
-import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
+import com.wilderman.reviewer.db.primary.entities.*;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
-import com.wilderman.reviewer.db.primary.repository.PatientRepository;
-import com.wilderman.reviewer.db.primary.repository.ReviewRepository;
-import com.wilderman.reviewer.db.primary.repository.VisitRepository;
+import com.wilderman.reviewer.db.primary.repository.*;
+import com.wilderman.reviewer.dto.FetchLogData;
 import com.wilderman.reviewer.dto.PublishSmsInput;
 import com.wilderman.reviewer.dto.PublishSmsOutput;
+import com.wilderman.reviewer.dto.response.Response;
 import com.wilderman.reviewer.exception.ServiceException;
+import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +45,12 @@ public class PatientService {
     ReviewRepository reviewRepository;
 
     @Autowired
+    VisitorFetchLogRepository visitorFetchLogRepository;
+
+    @Autowired
+    PushHistoryRepository pushHistoryRepository;
+
+    @Autowired
     PhoneNumberService phoneNumberService;
 
     @Autowired
@@ -59,7 +63,13 @@ public class PatientService {
     ClientService clientService;
 
     @Autowired
+    VisitorService visitorService;
+
+    @Autowired
     MessageTextService messageTextService;
+
+    @Autowired
+    VisitorFetchLogService visitorFetchLogService;
 
     //    private static final String testOhip = "12345";
     public static final Integer BAD_RATING_MAX = 3;
@@ -101,18 +111,35 @@ public class PatientService {
         }
 
         patient.setStatus(PatientStatus.NEW);
+        patient.setAttempts(0);
 
 //        for (Visit visit : Optional.ofNullable(patient.getVisits()).orElse(Collections.emptyList())) {
         visit.setStatus(VisitStatus.NEW);
 //        }
+        VisitorFetchLog log = visit.getLog();
+        log.setAttempts(0);
+
 
         reviewRepository.deleteAll(reviewRepository.findAllByPatient(patient));
-
-
         patientRepository.save(patient);
+        visitorFetchLogRepository.save(log);
 
-        pushNotification(visit);
-
+//        FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
+//        Client client = clientService.getClientByUname(data.getUname());
+//
+//        pushNotification(visit, client);
+//
+//        for (Visit anyVisit : patient.getVisits()) {
+//            anyVisit.setStatus(VisitStatus.PROCESSED);
+//        }
+//
+//        patient.setStatus(PatientStatus.SENT);
+//        patient.setAttempts(patient.getAttempts() + 1);
+//        log.setAttempts(log.getAttempts() + 1);
+//
+//        patientRepository.save(patient);
+//        visitorFetchLogRepository.save(log);
+//
         String hash;
         try {
             hash = hashService.toHash(visit);
@@ -123,11 +150,13 @@ public class PatientService {
         return hash;
     }
 
-    public Patient pushNotification(Visit visit) throws ServiceException {
+    public Patient pushNotification(Visit visit, Client client) throws ServiceException {
         Map<String, String> map = new HashMap<>();
         Patient patient = visit.getPatient();
         map.put("name", patient.hasName() ? patient.getFullname() : patient.getOhip());
-        map.put("clinic_name", clientService.getClient().getName());
+//        map.put("clinic_name", clientService.getClient().getName());
+        map.put("clinic_name",  client.getName());
+
         try {
             map.put("url", generateWebUrl(visit));
         } catch (Exception e) {
@@ -157,11 +186,12 @@ public class PatientService {
             throw new ServiceException("Error in lambda service");
         }
 
-        for (Visit anyVisit : patient.getVisits()) {
-            anyVisit.setStatus(VisitStatus.PROCESSED);
-        }
 
-        patient.setStatus(PatientStatus.SENT);
+//        for (Visit anyVisit : patient.getVisits()) {
+//            anyVisit.setStatus(VisitStatus.PROCESSED);
+//        }
+//
+//        patient.setStatus(PatientStatus.SENT);
 
         return patient;
     }
@@ -251,6 +281,119 @@ public class PatientService {
 
     public Page<Patient> getPatientsByLog(VisitorFetchLog log, Pageable pageable) {
         return patientRepository.findByLogWithPagination(log, pageable);
+    }
+
+
+    @Transactional
+    public List<Patient> sendMessagesForLog(Long logId) throws ServiceException {
+        VisitorFetchLog log = visitorService.getLogById(logId);
+        if (log == null) {
+            throw new ServiceException("Log id not found");
+        }
+
+        FetchLogData data = visitorFetchLogService.getFetchLogData(log);
+        Client client = clientService.getClientByUname(data.getUname());
+        List<Patient> patientList = new ArrayList<>();
+
+        if (log.getAttempts() == 0) {
+            patientList = sendMessagesForLogFirstTime(log, client);
+        } else {
+            patientList = resendMessagesForLog(log, client);
+        }
+
+        PushHistory pushHistory = new PushHistory();
+        pushHistory.setLog(log);
+        pushHistoryRepository.save(pushHistory);
+
+        return patientList;
+    }
+
+
+    private List<Patient> sendMessagesForLogFirstTime(VisitorFetchLog log, Client client) throws ServiceException {
+        if (log.getAttempts() > 0) {
+            throw new ServiceException("Push message has already been sent for the log " + log.getId());
+        }
+
+        List<Patient> unsentPatients = patientRepository.findAllUnprocessedForLog(
+                PatientStatus.unprocessed(), log, client.getId()
+        );
+
+        if (unsentPatients.size() == 0) {
+            throw new ServiceException("No patients will be affected");
+        }
+
+        Set<Patient> patients = new HashSet<>(unsentPatients);
+
+        for (Patient patient : patients) {
+            sendPushNotificationToSinglePatient(client, patient);
+        }
+
+        if (patients.size() > 0) {
+            patientRepository.saveAll(patients);
+        }
+
+        log.setAttempts(log.getAttempts() + 1);
+        visitorFetchLogRepository.save(log);
+
+        return new ArrayList<>(patients);
+    }
+
+    private List<Patient> resendMessagesForLog(VisitorFetchLog log, Client client) throws ServiceException {
+        if (log.getAttempts() >= 3) {
+            throw new ServiceException("Maximum limit of 3 push notifications has been reached for the log " + log.getId());
+        }
+
+        List<Patient> patientsList = patientRepository.findAllToResend(log, client.getId());
+
+        if (patientsList.size() == 0) {
+            throw new ServiceException("No patients will be affected");
+        }
+
+        Set<Patient> patients = new HashSet<>(patientsList);
+
+        for (Patient patient : patients) {
+            Visit visit = patient.getVisits().stream()
+//                    .filter(e -> e.getStatus().equals(VisitStatus.PROCESSED))
+                    .findFirst()
+                    .orElse(null);
+
+            this.pushNotification(visit, client);
+            patient.setAttempts(patient.getAttempts() + 1);
+        }
+
+        if (patients.size() > 0) {
+            patientRepository.saveAll(patients);
+        }
+
+        log.setAttempts(log.getAttempts() + 1);
+        visitorFetchLogRepository.save(log);
+
+        return new ArrayList<>(patients);
+    }
+
+
+    private void sendPushNotificationToSinglePatient(Client client, Patient patient) {
+        Visit visit = patient
+                .getVisits().stream()
+                .filter(e -> e.getStatus().equals(VisitStatus.NEW))
+                .findFirst()
+                .orElse(null);
+
+        if (visit == null) {
+            // should not be here because query above will select only the ones with visit status new
+        }
+        try {
+            this.pushNotification(visit, client);
+
+            for (Visit anyVisit : patient.getVisits()) {
+                anyVisit.setStatus(VisitStatus.PROCESSED);
+            }
+
+            patient.setStatus(PatientStatus.SENT);
+            patient.setAttempts(patient.getAttempts() + 1);
+        } catch (ServiceException e) {
+            return;
+        }
     }
 
 

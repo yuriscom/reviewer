@@ -2,6 +2,7 @@ package com.wilderman.reviewer.utils;
 
 import java.text.SimpleDateFormat;
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -9,6 +10,7 @@ import java.util.TimeZone;
 public class DateTimeHelper {
 
     public final static String sqlDateFormat = "yyyy-MM-dd";
+    public final static DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
 
     public static LocalDateTime convertDateToLocalDateTime(Date dateToConvert) {
         return dateToConvert.toInstant()
@@ -29,6 +31,11 @@ public class DateTimeHelper {
         Date date=new Date(ts);
         SimpleDateFormat df = new SimpleDateFormat(format);
         return df.format(date);
+    }
+
+    public static String convertLocalDateTimeToString(LocalDateTime dt, String pattern) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
+        return dt.format(formatter);
     }
 
     public static Period diff(Long ts1, Long ts2) {

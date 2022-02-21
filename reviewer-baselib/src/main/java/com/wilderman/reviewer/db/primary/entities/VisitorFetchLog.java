@@ -3,11 +3,14 @@ package com.wilderman.reviewer.db.primary.entities;
 import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitorFetchLogStatus;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "visitor_fetch_log", schema = "public")
@@ -41,4 +44,13 @@ public class VisitorFetchLog implements IEntityId {
     @Column(name = "event_time")
     @CreatedDate
     private LocalDateTime eventTime;
+
+    @Column(name = "attempts")
+    private Integer attempts = 0;
+
+    @OneToMany(mappedBy = "log", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<PushHistory> pushHistoryList;
+
+
 }

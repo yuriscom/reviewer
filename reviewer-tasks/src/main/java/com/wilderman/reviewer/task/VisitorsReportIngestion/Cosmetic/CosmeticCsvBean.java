@@ -35,7 +35,8 @@ public class CosmeticCsvBean implements ICsvBean {
     private String fullname;
 
     @CsvBindByName(column = "Date Visited")
-    @CsvDate(value = "yyyy-MM-dd")
+//    @CsvDate(value = "yyyy-MM-dd")
+    @CsvDate(value = "MM/dd/yyyy")
     private Date lastVisit;
 
 //    @CsvBindByName(column = "Email Address")

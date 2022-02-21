@@ -52,7 +52,7 @@ public class RatingController extends BaseController {
 //        return new Response<>(new StepOutput(stepData));
 //    }
 
-    @PostMapping(value = "/step", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/step")
     @RequireValidHash
     public Response<StepOutput> step(HttpServletRequest req, @RequestParam String hash, @RequestBody StepInput stepInput) throws Exception {
         StepData stepData = stepService.generateStepData(hash, stepInput.getUserAgent());
@@ -64,7 +64,7 @@ public class RatingController extends BaseController {
         return new Response<>(new StepOutput(stepData));
     }
 
-    @PostMapping(value = "/rating", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/rating")
     @RequireValidHash
     public Response<RateResponse> rate(HttpServletRequest req, @RequestParam String hash, @RequestBody RateInput rateInput) throws ServiceException {
         try {
@@ -95,7 +95,7 @@ public class RatingController extends BaseController {
         }
     }
 
-    @PostMapping(value = "/rating/review", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/rating/review")
     @RequireValidHash
     public Response<Boolean> leaveBadReview(HttpServletRequest req, @RequestParam String hash, @RequestBody BadReviewInput badReviewInput) throws ServiceException {
         Review review = new Review();
@@ -115,7 +115,7 @@ public class RatingController extends BaseController {
         return new Response(new BadReviewOutput(review));
     }
 
-    @PostMapping(value = "/rating/ack", produces = "application/json", consumes = "application/json")
+    @PostMapping(value = "/rating/ack")
     @RequireValidHash
     public Response<Boolean> acknowledgeLinkClicked(HttpServletRequest req, @RequestParam String hash) throws ServiceException {
         Review review = new Review();

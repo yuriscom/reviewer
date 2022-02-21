@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 //@Repository
@@ -18,9 +19,12 @@ public interface VisitorFetchLogRepository extends ExtendedRepository<VisitorFet
 
     Optional<VisitorFetchLog> findTopByStatusAndNumRecordsGreaterThanOrderByCreatedAtAsc(VisitorFetchLogStatus status, Integer numRecords);
 
-    @Query("select l from VisitorFetchLog l where l.status=:status and l.s3key like :s3keyPrefix% and l.numRecords>0")
+    @Query("select l from VisitorFetchLog l where l.status=:status and l.s3key like :s3keyPrefix% and l.numRecords>0 order by l.id asc")
     Optional<VisitorFetchLog> findNextToProcess(@Param("status") VisitorFetchLogStatus status,
                                                 @Param("s3keyPrefix") String s3keyPrefix);
+
+    @Query("select l from VisitorFetchLog l where l.status=:status and l.numRecords>0 order by l.id asc")
+    List<VisitorFetchLog> findNextToProcessAllClients(@Param("status") VisitorFetchLogStatus status);
 
     Optional<VisitorFetchLog> getTopByStatusAndCreatedAtAfterOrderByCreatedAtAsc(VisitorFetchLogStatus status, LocalDateTime lastCreatedAt);
 

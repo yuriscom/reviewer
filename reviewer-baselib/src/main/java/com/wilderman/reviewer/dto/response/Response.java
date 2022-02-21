@@ -2,14 +2,14 @@ package com.wilderman.reviewer.dto.response;
 
 public class Response<T> implements ISingleResponse<T> {
 
-    private int statusCode;
+    private int status;
     private String error;
     private T data;
 
     public Response() {}
 
-    public Response(int statusCode, T data) {
-        this.statusCode = statusCode;
+    public Response(int status, T data) {
+        this.status = status;
         this.data = data;
     }
 
@@ -17,18 +17,18 @@ public class Response<T> implements ISingleResponse<T> {
         this(200, data, null);
     }
 
-    public Response(int statusCode, T data, String error) {
-		this(statusCode, data);
+    public Response(int status, T data, String error) {
+		this(status, data);
 		this.error = error;
 	}
 
     @Override
-    public int getStatusCode() {
-        return statusCode;
+    public int getStatus() {
+        return status;
     }
 
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
+    public void setStatus(int status) {
+        this.status = status;
     }
 
     @Override

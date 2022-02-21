@@ -20,6 +20,15 @@ public enum PatientStatus {
         return Arrays.asList(brandStatuses);
     }
 
+    public static List<PatientStatus> sendable() {
+        PatientStatus[] brandStatuses = {
+                PatientStatus.SENT,
+                PatientStatus.NEW,
+                PatientStatus.NONE
+        };
+        return Arrays.asList(brandStatuses);
+    }
+
     public static List<PatientStatus> unprocessed() {
         PatientStatus[] brandStatuses = {
                 PatientStatus.NEW,

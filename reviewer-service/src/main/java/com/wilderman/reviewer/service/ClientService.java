@@ -2,7 +2,6 @@ package com.wilderman.reviewer.service;
 
 import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.repository.ClientRepository;
-import com.wilderman.reviewer.dto.response.PageableResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -22,6 +21,8 @@ public class ClientService {
 
     private Client client;
 
+
+
     @PostConstruct
     public void init() {
         client = clientRepository.findFirstByUname(activeProfile);
@@ -37,5 +38,9 @@ public class ClientService {
 
     public Page<Client> getClients(Pageable pageable) {
         return clientRepository.findAll(pageable);
+    }
+
+    public Client getClientByUname(String uname) {
+        return clientRepository.findFirstByUname(uname);
     }
 }

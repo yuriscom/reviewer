@@ -57,6 +57,9 @@ public class Patient implements IEntityId {
     @Column(name = "sample_id")
     private Integer sampleId = 3;
 
+    @Column(name = "attempts")
+    private Integer attempts = 0;
+
     @Column(name = "created_at", nullable = false)
     @CreatedDate
     private LocalDateTime createdAt;

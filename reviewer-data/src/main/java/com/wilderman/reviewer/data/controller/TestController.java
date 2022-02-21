@@ -20,11 +20,11 @@ public class TestController {
     @Autowired
     PatientService patientService;
 
-    @PostMapping(value = "patient", produces = "application/json", consumes = "application/json")
-    public Response<InitPatientOutput> initPatient(HttpServletRequest req, @RequestBody InitPatientInput input) throws ServiceException {
-        String hash = patientService.initPatientForTest(input.getPhoneNumber(), input.getId());
-        return new Response<>(new InitPatientOutput(hash));
-    }
+//    @PostMapping(value = "patient", produces = "application/json", consumes = "application/json")
+//    public Response<InitPatientOutput> initPatient(HttpServletRequest req, @RequestBody InitPatientInput input) throws ServiceException {
+//        String hash = patientService.initPatientForTest(input.getPhoneNumber(), input.getId());
+//        return new Response<>(new InitPatientOutput(hash));
+//    }
 
     @GetMapping(value = "patient")
     public Response<InitPatientOutput> initPatient1(HttpServletRequest req, @RequestParam String phone) throws ServiceException {

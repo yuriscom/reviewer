@@ -14,6 +14,7 @@ import com.wilderman.reviewer.db.primary.repository.ClientRepository;
 import com.wilderman.reviewer.db.primary.repository.PatientRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitorFetchLogRepository;
+import com.wilderman.reviewer.dto.FetchLogData;
 import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.*;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBean;
@@ -79,6 +80,12 @@ public class VisitorsService {
     @Autowired
     PatientService patientService;
 
+    @Autowired
+    ClientService clientService;
+
+    @Autowired
+    VisitorFetchLogService visitorFetchLogService;
+
     @Value("${spring.profiles.active:accuro}")
     private String activeProfile;
 
@@ -104,17 +111,24 @@ public class VisitorsService {
 
 //        Optional<VisitorFetchLog> logOpt = visitorFetchLogRepository
 //                .findTopByStatusAndNumRecordsGreaterThanOrderByCreatedAtAsc(VisitorFetchLogStatus.PENDING, 0);
-        Optional<VisitorFetchLog> logOpt = visitorFetchLogRepository
-                .findNextToProcess(VisitorFetchLogStatus.PENDING, s3Prefix);
+        List<VisitorFetchLog> logOpt = visitorFetchLogRepository
+                .findNextToProcessAllClients(VisitorFetchLogStatus.PENDING);
 
-        if (!logOpt.isPresent()) {
+        if (logOpt.size() == 0) {
             return 0;
         }
 
-        VisitorFetchLog log = logOpt.get();
+        VisitorFetchLog log = logOpt.get(0);
 
-        InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, log.getS3key()));
-        BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+        BufferedReader br = null;
+        try {
+            InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, log.getS3key()));
+            br = new BufferedReader(new InputStreamReader(stream));
+        } catch (Exception e) {
+            log.setStatus(VisitorFetchLogStatus.FAILED);
+            visitorFetchLogRepository.save(log);
+            return 0;
+        }
 
         Map<String, PatientVisitRecord> patientsMap = new HashMap<>();
         try {
@@ -125,6 +139,7 @@ public class VisitorsService {
             }
         } catch (Exception e) {
             log.setStatus(VisitorFetchLogStatus.FAILED);
+            visitorFetchLogRepository.save(log);
             return 0;
         }
 
@@ -140,6 +155,7 @@ public class VisitorsService {
             }
 
             Visit visit = new Visit(existingPatient, patientVisitRecord.getVisitedOn(), log);
+            visit.setStatus(PatientStatus.unprocessed().contains(existingPatient.getStatus()) ? VisitStatus.NEW : VisitStatus.PROCESSED);
             visit.setHash(RandomString.generateRandomString(8));
             visits.add(visit);
             patientsMap.remove(phone);
@@ -264,7 +280,9 @@ public class VisitorsService {
                 // should not be here because query above will select only the ones with visit status new
             }
             try {
-                patientService.pushNotification(visit);
+                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
+                Client client = clientService.getClientByUname(data.getUname());
+                patientService.pushNotification(visit, client);
             } catch (ServiceException e) {
                 continue;
             }
@@ -296,7 +314,15 @@ public class VisitorsService {
                 // should not be here because query above will select only the ones with visit status new
             }
             try {
-                patientService.pushNotification(visit);
+                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
+                Client client = clientService.getClientByUname(data.getUname());
+                patientService.pushNotification(visit, client);
+
+                for (Visit anyVisit : patient.getVisits()) {
+                    anyVisit.setStatus(VisitStatus.PROCESSED);
+                }
+
+                patient.setStatus(PatientStatus.SENT);
             } catch (ServiceException e) {
                 continue;
             }
