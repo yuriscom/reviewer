@@ -1,12 +1,15 @@
 package com.wilderman.reviewer.service;
 
 
+import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.Review;
 import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.db.primary.repository.PatientRepository;
 import com.wilderman.reviewer.db.primary.repository.ReviewRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
+import com.wilderman.reviewer.dto.FetchLogData;
+import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.utils.MD5;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,9 @@ public class HashService {
 
     @Autowired
     ClientService clientService;
+
+    @Autowired
+    VisitorFetchLogService visitorFetchLogService;
 
     public String md5String(Patient patient) throws NoSuchAlgorithmException {
         //MessageDigest md = MessageDigest.getInstance("MD5");
@@ -99,7 +105,17 @@ public class HashService {
         return hashVisits.stream()
                 .filter(e -> md5StringExceptionSuppressed(e.getPatient()).equals(hashParts[0]))
                 .findFirst()
-                .filter(e -> clientService.getClient().getId().equals(e.getPatient().getClient().getId()))
+                .filter(e -> {
+                    FetchLogData fetchLogData = null;
+                    try {
+                        fetchLogData = visitorFetchLogService.getFetchLogData(e.getLog());
+                    } catch (ServiceException serviceException) {
+                        return false;
+                    }
+
+                    Client client = clientService.getClientByUname(fetchLogData.getUname());
+                    return client.getId().equals(e.getPatient().getClient().getId());
+                })
                 .orElse(null);
     }
 

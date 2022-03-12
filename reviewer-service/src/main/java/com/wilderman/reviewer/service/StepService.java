@@ -1,7 +1,9 @@
 package com.wilderman.reviewer.service;
 
+import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.entities.Review;
 import com.wilderman.reviewer.db.primary.entities.Visit;
+import com.wilderman.reviewer.dto.FetchLogData;
 import com.wilderman.reviewer.dto.StepData;
 import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
@@ -23,9 +25,12 @@ public class StepService {
     @Autowired
     ClientService clientService;
 
+    @Autowired
+    VisitorFetchLogService visitorFetchLogService;
+
     protected final Logger LOG = LoggerFactory.getLogger(this.getClass());
 
-    public StepData generateStepData(String hash, String userAgent) {
+    public StepData generateStepData(String hash, String userAgent) throws ServiceException {
         StepData stepData = new StepData();
 
         Visit visit;
@@ -40,6 +45,9 @@ public class StepService {
         }
 
         LOG.info("patient " + visit.getPatient().getId() + " with sample " + visit.getPatient().getSampleId());
+        FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(visit.getLog());
+        Client client = clientService.getClientByUname(fetchLogData.getUname());
+        stepData.setClient(client);
 
         if (visit.getPatient().getSampleId().equals(3)) {
             UAgentInfo agentInfo = new UAgentInfo(userAgent, "");
@@ -47,8 +55,8 @@ public class StepService {
 
             stepData.setStep(Step.FORWARD);
             stepData.setForwardToUrl(isMobile ?
-                    clientService.getClient().getLinkGoogleMobile()
-                    : clientService.getClient().getLinkGoogleDesktop()
+                    client.getLinkGoogleMobile()
+                    : client.getLinkGoogleDesktop()
             );
 
             Review autoReview = new Review();
@@ -62,6 +70,7 @@ public class StepService {
         } else {
             Step step = null;
             switch (visit.getStatus()) {
+                case NEW:
                 case PROCESSED:
                     step = Step.RATE_PAGE;
                     break;

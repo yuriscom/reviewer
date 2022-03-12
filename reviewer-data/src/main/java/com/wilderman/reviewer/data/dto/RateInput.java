@@ -1,13 +1,11 @@
 package com.wilderman.reviewer.data.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class RateInput {
     private Integer rating;
-
-    public Integer getRating() {
-        return rating;
-    }
-
-    public void setRating(Integer rating) {
-        this.rating = rating;
-    }
+    private String userAgent;
 }

@@ -22,8 +22,8 @@ public class ClientController {
     ClientService clientService;
 
     @GetMapping(value = "")
-    public Response<ClientOutput> getClient(HttpServletRequest req) throws Exception {
-        log.info(String.format("IP: %s, HOST: %s", req.getRemoteAddr(), req.getRemoteHost()));
-        return new Response<>(new ClientOutput(clientService.getClient()));
+    public Response<Boolean> getClient(HttpServletRequest req) throws Exception {
+//        log.info(String.format("IP: %s, HOST: %s", req.getRemoteAddr(), req.getRemoteHost()));
+        return new Response<>(false);
     }
 }

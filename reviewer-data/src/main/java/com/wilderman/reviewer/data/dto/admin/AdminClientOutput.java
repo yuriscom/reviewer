@@ -14,6 +14,7 @@ public class AdminClientOutput {
     private String name;
     private String website;
     private String linkGoogleMobile;
+    private String linkGoogleDesktop;
     private String logo;
 
     public AdminClientOutput(Client client) {
@@ -22,6 +23,7 @@ public class AdminClientOutput {
         name = client.getName();
         website = client.getWebsite();
         linkGoogleMobile = client.getLinkGoogleMobile();
+        linkGoogleDesktop = client.getLinkGoogleDesktop();
         logo = client.getLogo();
     }
 }

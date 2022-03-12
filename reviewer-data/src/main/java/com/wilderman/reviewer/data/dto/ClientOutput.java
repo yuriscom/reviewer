@@ -14,6 +14,7 @@ public class ClientOutput {
     private String name;
     private String website;
     private String linkGoogleMobile;
+    private String linkGoogleDesktop;
     private String logo;
 
     public ClientOutput(Client client) {
@@ -22,6 +23,7 @@ public class ClientOutput {
         name = client.getName();
         website = client.getWebsite();
         linkGoogleMobile = client.getLinkGoogleMobile();
+        linkGoogleDesktop = client.getLinkGoogleDesktop();
         logo = client.getLogo();
     }
 }

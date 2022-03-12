@@ -66,6 +66,9 @@ public class VisitorsService {
     VisitorFetchLogRepository visitorFetchLogRepository;
 
     @Autowired
+    VisitorFetchLogService visitorFetchLogService;
+
+    @Autowired
     VisitRepository visitRepository;
 
     @Autowired
@@ -83,9 +86,6 @@ public class VisitorsService {
     @Autowired
     ClientService clientService;
 
-    @Autowired
-    VisitorFetchLogService visitorFetchLogService;
-
     @Value("${spring.profiles.active:accuro}")
     private String activeProfile;
 
@@ -94,20 +94,20 @@ public class VisitorsService {
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    private Client client;
-    private String s3Prefix;
+//    private Client client;
+//    private String s3Prefix;
 
     @PostConstruct
     public void init() {
-        client = clientRepository.findFirstByUname(activeProfile);
-        s3Prefix = String.format("%s/%s", s3bucket, Optional.ofNullable(client).orElse(new Client()).getUname());
+//        client = clientRepository.findFirstByUname(activeProfile);
+//        s3Prefix = String.format("%s/%s", s3bucket, Optional.ofNullable(client).orElse(new Client()).getUname());
     }
 
     @Transactional
     public Integer ingestData() throws Exception {
 
-        Optional.ofNullable(client)
-                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
+//        Optional.ofNullable(client)
+//                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
 
 //        Optional<VisitorFetchLog> logOpt = visitorFetchLogRepository
 //                .findTopByStatusAndNumRecordsGreaterThanOrderByCreatedAtAsc(VisitorFetchLogStatus.PENDING, 0);
@@ -119,6 +119,8 @@ public class VisitorsService {
         }
 
         VisitorFetchLog log = logOpt.get(0);
+        FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(log);
+        Client client = clientService.getClientByUname(fetchLogData.getUname());
 
         BufferedReader br = null;
         try {
@@ -133,9 +135,9 @@ public class VisitorsService {
         Map<String, PatientVisitRecord> patientsMap = new HashMap<>();
         try {
             if (log.getS3key().endsWith(".xml")) {
-                patientsMap = processFromXml(br);
+                patientsMap = processFromXml(br, client);
             } else {
-                patientsMap = processFromCsv(br);
+                patientsMap = processFromCsv(br, client);
             }
         } catch (Exception e) {
             log.setStatus(VisitorFetchLogStatus.FAILED);
@@ -163,6 +165,8 @@ public class VisitorsService {
 
         for (PatientVisitRecord patientVisitRecord : patientsMap.values()) {
             Patient newPatient = mapper.map(patientVisitRecord, Patient.class);
+            Integer sampleId = fetchLogData.getIsDirect() ? 3 : 2;
+            newPatient.setSampleId(sampleId);
             newPatient.setClient(client);
             newPatient.setHash(RandomString.generateRandomString(8));
             Visit visit = new Visit(newPatient, patientVisitRecord.getVisitedOn(), log);
@@ -176,7 +180,7 @@ public class VisitorsService {
         return visits.size();
     }
 
-    private Map<String, PatientVisitRecord> processFromXml(BufferedReader br) throws Exception {
+    private Map<String, PatientVisitRecord> processFromXml(BufferedReader br, Client client) throws Exception {
         String xmlUtf = br.lines().collect(Collectors.joining());
         String xml = new String(xmlUtf.getBytes(Charset.forName("utf-8")));
         xml = xml.trim().replaceFirst("^([\\W]+)<", "<");
@@ -200,8 +204,8 @@ public class VisitorsService {
         return map;
     }
 
-    private Class<? extends ICsvBean> getCsvBean() {
-        switch (activeProfile) {
+    private Class<? extends ICsvBean> getCsvBean(Client client) {
+        switch (client.getUname()) {
             case "cosmetic":
                 return CosmeticCsvBean.class;
             case "accuro":
@@ -210,8 +214,8 @@ public class VisitorsService {
         }
     }
 
-    private Map<String, PatientVisitRecord> processFromCsv(BufferedReader br) {
-        Class<? extends ICsvBean> clazz = getCsvBean();
+    private Map<String, PatientVisitRecord> processFromCsv(BufferedReader br, Client client) {
+        Class<? extends ICsvBean> clazz = getCsvBean(client);
 
         HeaderColumnNameMappingStrategy ms = new HeaderColumnNameMappingStrategy();
         ms.setType(clazz);
@@ -259,84 +263,84 @@ public class VisitorsService {
 //        return map;
 //    }
 
-    @Transactional
-    public boolean resendVisitorsByLogId(Long logId) throws Exception {
-
-        Optional.ofNullable(client)
-                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
-
-        VisitorFetchLog log = visitorFetchLogRepository.findById(logId)
-                .orElseThrow(() -> new Exception("Log not found for log " + logId));
-
-        List<Patient> patients = patientRepository.findAllToResend(log, client.getId());
-
-        if (patients.size() == 0) {
-            return false;
-        }
-
-        for (Patient patient : patients) {
-            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.PROCESSED)).findFirst().orElse(null);
-            if (visit == null) {
-                // should not be here because query above will select only the ones with visit status new
-            }
-            try {
-                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
-                Client client = clientService.getClientByUname(data.getUname());
-                patientService.pushNotification(visit, client);
-            } catch (ServiceException e) {
-                continue;
-            }
-        }
-
-        return true;
-    }
-
-
-    @Transactional
-    public boolean scanVisitorsAndSendMessages() throws Exception {
-
-        Optional.ofNullable(client)
-                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
-
-        List<Long> logIdsToUpdate = visitRepository.findUnprocessedLogsForClient(client.getId());
-//        List<Patient> patientsJoined = patientRepository.xxx("NEW");
-        List<Patient> patientsJoined = patientRepository.findAllUnprocessed(PatientStatus.unprocessed(), client.getId());
-
-        Set<Patient> patients = new HashSet<>(patientsJoined);
-
-        if (patients.size() == 0) {
-            return false;
-        }
-
-        for (Patient patient : patients) {
-            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.NEW)).findFirst().orElse(null);
-            if (visit == null) {
-                // should not be here because query above will select only the ones with visit status new
-            }
-            try {
-                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
-                Client client = clientService.getClientByUname(data.getUname());
-                patientService.pushNotification(visit, client);
-
-                for (Visit anyVisit : patient.getVisits()) {
-                    anyVisit.setStatus(VisitStatus.PROCESSED);
-                }
-
-                patient.setStatus(PatientStatus.SENT);
-            } catch (ServiceException e) {
-                continue;
-            }
-        }
-
-        if (patients.size() > 0) {
-            patientRepository.saveAll(patients);
-        }
-
-        if (logIdsToUpdate.size() > 0) {
-            visitRepository.setSentByLogIds(logIdsToUpdate);
-        }
-
-        return true;
-    }
+//    @Transactional
+//    public boolean resendVisitorsByLogId(Long logId) throws Exception {
+//
+//        Optional.ofNullable(client)
+//                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
+//
+//        VisitorFetchLog log = visitorFetchLogRepository.findById(logId)
+//                .orElseThrow(() -> new Exception("Log not found for log " + logId));
+//
+//        List<Patient> patients = patientRepository.findAllToResend(log, client.getId());
+//
+//        if (patients.size() == 0) {
+//            return false;
+//        }
+//
+//        for (Patient patient : patients) {
+//            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.PROCESSED)).findFirst().orElse(null);
+//            if (visit == null) {
+//                // should not be here because query above will select only the ones with visit status new
+//            }
+//            try {
+//                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
+//                Client client = clientService.getClientByUname(data.getUname());
+//                patientService.pushNotification(visit, client);
+//            } catch (ServiceException e) {
+//                continue;
+//            }
+//        }
+//
+//        return true;
+//    }
+//
+//
+//    @Transactional
+//    public boolean scanVisitorsAndSendMessages() throws Exception {
+//
+//        Optional.ofNullable(client)
+//                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
+//
+//        List<Long> logIdsToUpdate = visitRepository.findUnprocessedLogsForClient(client.getId());
+////        List<Patient> patientsJoined = patientRepository.xxx("NEW");
+//        List<Patient> patientsJoined = patientRepository.findAllUnprocessed(PatientStatus.unprocessed(), client.getId());
+//
+//        Set<Patient> patients = new HashSet<>(patientsJoined);
+//
+//        if (patients.size() == 0) {
+//            return false;
+//        }
+//
+//        for (Patient patient : patients) {
+//            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.NEW)).findFirst().orElse(null);
+//            if (visit == null) {
+//                // should not be here because query above will select only the ones with visit status new
+//            }
+//            try {
+//                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
+//                Client client = clientService.getClientByUname(data.getUname());
+//                patientService.pushNotification(visit, client);
+//
+//                for (Visit anyVisit : patient.getVisits()) {
+//                    anyVisit.setStatus(VisitStatus.PROCESSED);
+//                }
+//
+//                patient.setStatus(PatientStatus.SENT);
+//            } catch (ServiceException e) {
+//                continue;
+//            }
+//        }
+//
+//        if (patients.size() > 0) {
+//            patientRepository.saveAll(patients);
+//        }
+//
+//        if (logIdsToUpdate.size() > 0) {
+//            visitRepository.setSentByLogIds(logIdsToUpdate);
+//        }
+//
+//        return true;
+//    }
 
 }

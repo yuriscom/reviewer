@@ -10,6 +10,7 @@ import com.wilderman.reviewer.dto.PublishSmsInput;
 import com.wilderman.reviewer.dto.PublishSmsOutput;
 import com.wilderman.reviewer.dto.response.Response;
 import com.wilderman.reviewer.exception.ServiceException;
+import com.wilderman.reviewer.utils.UAgentInfo;
 import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,24 +78,29 @@ public class PatientService {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Transactional
-    public String initPatientByPhoneForTest(String phoneNumber) throws ServiceException {
+    public String initPatientByPhoneForTest(String phoneNumber, String client) throws ServiceException {
         String phoneStandardized = phoneNumberService.standardize(phoneNumber);
         List<Patient> patientList = patientRepository.findAllByPhoneIn(Lists.newArrayList(phoneStandardized));
         if (patientList.size() == 0) {
             throw new ServiceException("Patient with phone " + phoneStandardized + " was not found");
         }
 
-        return initPatientForTest(phoneStandardized, patientList.get(0).getId());
+        return initPatientForTest(phoneStandardized, client, patientList.get(0).getId());
     }
 
     @Transactional
-    public String initPatientForTest(String phoneNumber, Long id) throws ServiceException {
+    public String initPatientForTest(String phoneNumber, String uname, Long id) throws ServiceException {
 //        Patient patient = patientRepository.findFirstByOhip(testOhip);
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ServiceException("Patient with id " + id + " was not found"));
 //        if (patient == null) {
 //            throw new ServiceException("Patient with test ohip was not found");
 //        }
+
+        Client client = clientService.getClientByUname(uname);
+        if (client == null) {
+            throw new ServiceException("no client " + uname);
+        }
 
         Visit visit = Optional.ofNullable(patient.getVisits())
                 .orElse(Collections.emptyList())
@@ -111,6 +117,7 @@ public class PatientService {
         }
 
         patient.setStatus(PatientStatus.NEW);
+        patient.setClient(client);
         patient.setAttempts(0);
 
 //        for (Visit visit : Optional.ofNullable(patient.getVisits()).orElse(Collections.emptyList())) {
@@ -228,9 +235,16 @@ public class PatientService {
         }
     }
 
-    public String generateReviewLink(String hash) {
+    public String generateReviewLink(String hash, String userAgent, Client client) {
         String redirectTo = "";
-        String linkGoogle = clientService.getClient().getLinkGoogleMobile();
+
+        UAgentInfo agentInfo = new UAgentInfo(userAgent, "");
+        boolean isMobile = agentInfo.detectMobileLong();
+
+        String linkGoogle = isMobile ?
+                client.getLinkGoogleMobile()
+                : client.getLinkGoogleDesktop();
+
         try {
             redirectTo = URLEncoder.encode(linkGoogle, StandardCharsets.UTF_8.toString());
         } catch (UnsupportedEncodingException e) {

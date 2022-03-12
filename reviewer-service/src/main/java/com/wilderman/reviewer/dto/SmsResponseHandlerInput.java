@@ -1,5 +1,6 @@
 package com.wilderman.reviewer.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.dto.SmsResponseHandler.MessageObject;
@@ -48,6 +49,7 @@ public class SmsResponseHandlerInput {
         this.records = records;
     }
 
+    @JsonIgnore
     public boolean isValid() {
         return this.getRecords().get(0).getSns().getMessage() != null;
     }

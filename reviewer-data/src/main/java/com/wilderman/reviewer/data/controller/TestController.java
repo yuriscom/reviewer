@@ -27,8 +27,8 @@ public class TestController {
 //    }
 
     @GetMapping(value = "patient")
-    public Response<InitPatientOutput> initPatient1(HttpServletRequest req, @RequestParam String phone) throws ServiceException {
-        String hash = patientService.initPatientByPhoneForTest(phone);
+    public Response<InitPatientOutput> initPatient1(HttpServletRequest req, @RequestParam String phone, @RequestParam String client) throws ServiceException {
+        String hash = patientService.initPatientByPhoneForTest(phone, client);
         return new Response<>(new InitPatientOutput(hash));
     }
 }

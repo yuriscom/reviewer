@@ -8,7 +8,6 @@ import com.wilderman.reviewer.data.dto.admin.AdminPatientOutput;
 import com.wilderman.reviewer.db.primary.entities.Client;
 import com.wilderman.reviewer.db.primary.entities.Patient;
 import com.wilderman.reviewer.db.primary.entities.VisitorFetchLog;
-import com.wilderman.reviewer.dto.FetchLogData;
 import com.wilderman.reviewer.dto.response.PageableResponse;
 import com.wilderman.reviewer.dto.response.Response;
 import com.wilderman.reviewer.exception.ServiceException;

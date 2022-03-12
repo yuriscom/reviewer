@@ -15,10 +15,12 @@ import lombok.Setter;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StepOutput extends StepData {
     private Step step;
+    ClientOutput clientDetails;
     private String forwardToUrl;
 
     public StepOutput(StepData stepData) {
         this.step = stepData.getStep();
         this.forwardToUrl = stepData.getForwardToUrl();
+        this.clientDetails = new ClientOutput(stepData.getClient());
     }
 }

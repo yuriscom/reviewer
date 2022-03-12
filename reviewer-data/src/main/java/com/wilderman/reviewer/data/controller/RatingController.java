@@ -4,19 +4,15 @@ import com.wilderman.reviewer.config.GenerateSwaggerSpec;
 import com.wilderman.reviewer.controller.BaseController;
 import com.wilderman.reviewer.data.annotation.RequireValidHash;
 import com.wilderman.reviewer.data.dto.*;
-import com.wilderman.reviewer.db.primary.entities.Patient;
-import com.wilderman.reviewer.db.primary.entities.Review;
-import com.wilderman.reviewer.db.primary.entities.Visit;
+import com.wilderman.reviewer.db.primary.entities.*;
+import com.wilderman.reviewer.dto.FetchLogData;
 import com.wilderman.reviewer.dto.SmsResponseHandlerInput;
 import com.wilderman.reviewer.dto.SmsResponseHandlerOutput;
 import com.wilderman.reviewer.dto.StepData;
 import com.wilderman.reviewer.dto.response.Response;
 import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
-import com.wilderman.reviewer.service.HashService;
-import com.wilderman.reviewer.service.LambdaService;
-import com.wilderman.reviewer.service.PatientService;
-import com.wilderman.reviewer.service.StepService;
+import com.wilderman.reviewer.service.*;
 import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +35,12 @@ public class RatingController extends BaseController {
 
     @Autowired
     StepService stepService;
+
+    @Autowired
+    VisitorFetchLogService visitorFetchLogService;
+
+    @Autowired
+    ClientService clientService;
 
 //    @GetMapping(value = "/step")
 //    @RequireValidHash
@@ -73,6 +75,10 @@ public class RatingController extends BaseController {
                 throw new ServiceException("Hash is invalid");
             }
 
+
+            FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(visit.getLog());
+            Client client = clientService.getClientByUname(fetchLogData.getUname());
+
             // for possible re-rate
             patientService.normalizePreRateState(visit);
 
@@ -84,7 +90,7 @@ public class RatingController extends BaseController {
 //            RateResponse rateResponse = mapper.map(output, RateResponse.class);
 
             if (output.getStatusCode() == 200 && output.getBody().getHash().length() > 0) {
-                RateResponse rateResponse = new RateResponse(hash, patientService.generateReviewLink(hash), true);
+                RateResponse rateResponse = new RateResponse(hash, patientService.generateReviewLink(hash, rateInput.getUserAgent(), client), true);
                 return new Response<>(HttpStatus.SC_OK, rateResponse);
             } else {
                 return new Response<>(HttpStatus.SC_BAD_REQUEST, null, output.getBody().getError());
