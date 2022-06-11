@@ -127,6 +127,7 @@ public class VisitorsService {
             InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, log.getS3key()));
             br = new BufferedReader(new InputStreamReader(stream));
         } catch (Exception e) {
+            e.printStackTrace();
             log.setStatus(VisitorFetchLogStatus.FAILED);
             visitorFetchLogRepository.save(log);
             return 0;
@@ -140,6 +141,7 @@ public class VisitorsService {
                 patientsMap = processFromCsv(br, client);
             }
         } catch (Exception e) {
+            e.printStackTrace();
             log.setStatus(VisitorFetchLogStatus.FAILED);
             visitorFetchLogRepository.save(log);
             return 0;
@@ -148,34 +150,39 @@ public class VisitorsService {
         List<Patient> existingPatients = patientRepository.findAllByPhoneInAndClient(new HashSet<>(patientsMap.keySet()), client);
         List<Visit> visits = new ArrayList<>();
 
-        for (Patient existingPatient : existingPatients) {
-            String phone = existingPatient.getPhone();
-            PatientVisitRecord patientVisitRecord = patientsMap.get(phone);
-            if (patientVisitRecord == null) {
-                // shouldn't be here.. something is wrong
-                continue;
+        try {
+            for (Patient existingPatient : existingPatients) {
+                String phone = existingPatient.getPhone();
+                PatientVisitRecord patientVisitRecord = patientsMap.get(phone);
+                if (patientVisitRecord == null) {
+                    // shouldn't be here.. something is wrong
+                    continue;
+                }
+
+                Visit visit = new Visit(existingPatient, patientVisitRecord.getVisitedOn(), log);
+                visit.setStatus(PatientStatus.unprocessed().contains(existingPatient.getStatus()) ? VisitStatus.NEW : VisitStatus.PROCESSED);
+                visit.setHash(RandomString.generateRandomString(8));
+                visits.add(visit);
+                patientsMap.remove(phone);
             }
 
-            Visit visit = new Visit(existingPatient, patientVisitRecord.getVisitedOn(), log);
-            visit.setStatus(PatientStatus.unprocessed().contains(existingPatient.getStatus()) ? VisitStatus.NEW : VisitStatus.PROCESSED);
-            visit.setHash(RandomString.generateRandomString(8));
-            visits.add(visit);
-            patientsMap.remove(phone);
-        }
+            for (PatientVisitRecord patientVisitRecord : patientsMap.values()) {
+                Patient newPatient = mapper.map(patientVisitRecord, Patient.class);
+                Integer sampleId = fetchLogData.getIsDirect() ? 3 : 2;
+                newPatient.setSampleId(sampleId);
+                newPatient.setClient(client);
+                newPatient.setHash(RandomString.generateRandomString(8));
+                Visit visit = new Visit(newPatient, patientVisitRecord.getVisitedOn(), log);
+                visit.setHash(RandomString.generateRandomString(8));
+                visits.add(visit);
+            }
 
-        for (PatientVisitRecord patientVisitRecord : patientsMap.values()) {
-            Patient newPatient = mapper.map(patientVisitRecord, Patient.class);
-            Integer sampleId = fetchLogData.getIsDirect() ? 3 : 2;
-            newPatient.setSampleId(sampleId);
-            newPatient.setClient(client);
-            newPatient.setHash(RandomString.generateRandomString(8));
-            Visit visit = new Visit(newPatient, patientVisitRecord.getVisitedOn(), log);
-            visit.setHash(RandomString.generateRandomString(8));
-            visits.add(visit);
+            visitRepository.saveAll(visits);
+            log.setStatus(VisitorFetchLogStatus.PROCESSED);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
-
-        visitRepository.saveAll(visits);
-        log.setStatus(VisitorFetchLogStatus.PROCESSED);
 
         return visits.size();
     }

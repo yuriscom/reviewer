@@ -48,6 +48,7 @@ public class StepService {
         FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(visit.getLog());
         Client client = clientService.getClientByUname(fetchLogData.getUname());
         stepData.setClient(client);
+        stepData.setPatient(visit.getPatient());
 
         if (visit.getPatient().getSampleId().equals(3)) {
             UAgentInfo agentInfo = new UAgentInfo(userAgent, "");
