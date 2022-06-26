@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -16,6 +18,7 @@ public class ClientOutput {
     private String linkGoogleMobile;
     private String linkGoogleDesktop;
     private String logo;
+    private Map<String, String> additionalDetails;
 
     public ClientOutput(Client client) {
         id = client.getId();
@@ -25,5 +28,6 @@ public class ClientOutput {
         linkGoogleMobile = client.getLinkGoogleMobile();
         linkGoogleDesktop = client.getLinkGoogleDesktop();
         logo = client.getLogo();
+        additionalDetails = client.getData();
     }
 }

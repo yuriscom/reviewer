@@ -85,7 +85,12 @@ public class PatientService {
             throw new ServiceException("Patient with phone " + phoneStandardized + " was not found");
         }
 
-        return initPatientForTest(phoneStandardized, client, patientList.get(0).getId());
+        Patient patient = patientList.stream().filter(p -> p.getClient().getUname().equals(client)).findFirst()
+                .orElseThrow(() -> new ServiceException("Patient with phone " + phoneStandardized + " was not found for client " + client));
+
+        String hash = initPatientForTest(phoneStandardized, client, patient.getId());
+
+        return hash;
     }
 
     @Transactional
@@ -117,7 +122,7 @@ public class PatientService {
         }
 
         patient.setStatus(PatientStatus.NEW);
-        patient.setClient(client);
+//        patient.setClient(client);
         patient.setAttempts(0);
 
 //        for (Visit visit : Optional.ofNullable(patient.getVisits()).orElse(Collections.emptyList())) {
@@ -131,6 +136,8 @@ public class PatientService {
         patientRepository.save(patient);
         visitorFetchLogRepository.save(log);
 
+
+        sendPushNotificationToSinglePatient(client, patient);
 //        FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
 //        Client client = clientService.getClientByUname(data.getUname());
 //

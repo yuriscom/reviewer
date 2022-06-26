@@ -1,7 +1,6 @@
 package com.wilderman.reviewer.db.primary.entities;
 
 import com.wilderman.reviewer.db.primary.entities.enumtypes.PatientStatus;
-import com.wilderman.reviewer.db.primary.entities.enumtypes.VisitStatus;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
@@ -11,9 +10,9 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +32,7 @@ public class Patient implements IEntityId {
     private String ohip;
 
     @Column(name = "birthdate")
-    private Timestamp birthdate;
+    private Date birthdate;
 
     @Column(name = "fname", length = 255)
     private String fname;
