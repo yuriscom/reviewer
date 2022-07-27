@@ -219,7 +219,9 @@ public class PatientService {
         boolean isReviewOk = patient.getSampleId().equals(3) || isReviewPositive(review);
 
         if (!(isPatientOk && isVisitOk && isReviewOk)) {
-            throw new ServiceException("Invalid step");
+            //throw new ServiceException("Invalid step");
+            // invalid step, but just silently ignore
+            return review;
         }
 
         visit.setStatus(VisitStatus.ACKNOWLEDGED);
