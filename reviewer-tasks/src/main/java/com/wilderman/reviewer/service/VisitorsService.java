@@ -15,12 +15,13 @@ import com.wilderman.reviewer.db.primary.repository.PatientRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitRepository;
 import com.wilderman.reviewer.db.primary.repository.VisitorFetchLogRepository;
 import com.wilderman.reviewer.dto.FetchLogData;
-import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.*;
-import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBean;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBeanDateSlashes;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBeanDateSql;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Cosmetic.CosmeticCsvBean;
 import com.wilderman.reviewer.utils.AmazonClient;
 import com.wilderman.reviewer.utils.RandomString;
+import org.apache.commons.io.IOUtils;
 import org.modelmapper.ModelMapper;
 import org.simpleframework.xml.Serializer;
 import org.simpleframework.xml.core.Persister;
@@ -32,10 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.*;
@@ -138,10 +136,17 @@ public class VisitorsService {
             if (log.getS3key().endsWith(".xml")) {
                 patientsMap = processFromXml(br, client);
             } else {
-                patientsMap = processFromCsv(br, client);
+                String content = IOUtils.toString(br);
+                patientsMap = processFromCsv(content, client);
             }
         } catch (Exception e) {
             e.printStackTrace();
+            log.setStatus(VisitorFetchLogStatus.FAILED);
+            visitorFetchLogRepository.save(log);
+            return 0;
+        }
+
+        if (patientsMap == null) {
             log.setStatus(VisitorFetchLogStatus.FAILED);
             visitorFetchLogRepository.save(log);
             return 0;
@@ -211,18 +216,36 @@ public class VisitorsService {
         return map;
     }
 
-    private Class<? extends ICsvBean> getCsvBean(Client client) {
+    private Class<? extends ICsvBean> getCsvBean(Client client, int attempt) {
         switch (client.getUname()) {
             case "cosmetic":
-                return CosmeticCsvBean.class;
+                return attempt == 1 ? CosmeticCsvBean.class : null;
             case "accuro":
             default:
-                return AccuroCsvBean.class;
+                switch (attempt) {
+                    case 1:
+                        return AccuroCsvBeanDateSlashes.class;
+                    case 2:
+                        return AccuroCsvBeanDateSql.class;
+                    default:
+                        return null;
+                }
+
         }
     }
 
-    private Map<String, PatientVisitRecord> processFromCsv(BufferedReader br, Client client) {
-        Class<? extends ICsvBean> clazz = getCsvBean(client);
+    private Map<String, PatientVisitRecord> processFromCsv(String content, Client client) {
+        return processFromCsv(content, client, 1);
+    }
+
+    private Map<String, PatientVisitRecord> processFromCsv(String content, Client client, int attempt) {
+        Class<? extends ICsvBean> clazz = getCsvBean(client, attempt);
+        if (clazz == null) {
+            return null;
+        }
+
+        Reader sr = new StringReader(content);
+        BufferedReader br = new BufferedReader(sr);
 
         HeaderColumnNameMappingStrategy ms = new HeaderColumnNameMappingStrategy();
         ms.setType(clazz);
@@ -241,6 +264,7 @@ public class VisitorsService {
                     .collect(Collectors.toMap(e -> e.getPhone(), e -> e));
         } catch (Exception e) {
             e.printStackTrace();
+            return processFromCsv(content, client, ++attempt);
         }
 
 
@@ -249,15 +273,15 @@ public class VisitorsService {
 
 //    private Map<String, PatientVisitRecord> processFromCsv(BufferedReader br) {
 //        HeaderColumnNameMappingStrategy ms = new HeaderColumnNameMappingStrategy();
-//        ms.setType(AccuroCsvBean.class);
+//        ms.setType(AccuroCsvBeanDateSlashes.class);
 //        CsvToBean cb = new CsvToBeanBuilder(br)
-//                .withType(AccuroCsvBean.class)
+//                .withType(AccuroCsvBeanDateSlashes.class)
 //                .withMappingStrategy(ms)
 //                .build();
 //
 //        Map<String, PatientVisitRecord> map = null;
 //        try {
-//            List<AccuroCsvBean> beans = (List<AccuroCsvBean>) cb.parse();
+//            List<AccuroCsvBeanDateSlashes> beans = (List<AccuroCsvBeanDateSlashes>) cb.parse();
 //            map = beans.stream()
 //                    .filter(bean -> bean.getPhone().length() > 0)
 //                    .map(bean -> bean.toPatientVisitRecord())

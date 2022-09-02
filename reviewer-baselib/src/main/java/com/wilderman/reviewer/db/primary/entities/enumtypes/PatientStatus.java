@@ -4,17 +4,15 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum PatientStatus {
-    NEW, RATED, LEFT_BAD_REVIEW, ACKNOWLEDGED,
-    NONE, SENT, CLICKED, REVIEWED,
-    DISABLED;
+    NEW, SEEN, RATED, LEFT_BAD_REVIEW, ACKNOWLEDGED,
+    NONE, SENT, DISABLED;
 
     public static List<PatientStatus> processed() {
         PatientStatus[] brandStatuses = {
                 PatientStatus.RATED,
-                PatientStatus.REVIEWED,
                 PatientStatus.SENT,
+                PatientStatus.SEEN,
                 PatientStatus.DISABLED,
-                PatientStatus.CLICKED,
                 PatientStatus.LEFT_BAD_REVIEW
         };
         return Arrays.asList(brandStatuses);
@@ -23,6 +21,7 @@ public enum PatientStatus {
     public static List<PatientStatus> sendable() {
         PatientStatus[] brandStatuses = {
                 PatientStatus.SENT,
+                PatientStatus.SEEN,
                 PatientStatus.NEW,
                 PatientStatus.NONE
         };

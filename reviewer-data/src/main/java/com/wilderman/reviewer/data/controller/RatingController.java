@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("")
@@ -62,6 +63,11 @@ public class RatingController extends BaseController {
         if (stepData == null || stepData.getStep() == null) {
             throw new ServiceException("Hash is invalid");
         }
+
+        CompletableFuture.supplyAsync(() -> {
+            patientService.setPageViewed(hash);
+            return "";
+        });
 
         return new Response<>(new StepOutput(stepData));
     }

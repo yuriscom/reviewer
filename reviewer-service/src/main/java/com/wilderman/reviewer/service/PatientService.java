@@ -74,8 +74,11 @@ public class PatientService {
 
     //    private static final String testOhip = "12345";
     public static final Integer BAD_RATING_MAX = 3;
+    public static final Integer MAX_ATTEMPTS = 3;
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
+
+
 
     @Transactional
     public String initPatientByPhoneForTest(String phoneNumber, String client) throws ServiceException {
@@ -211,6 +214,29 @@ public class PatientService {
     }
 
     @Transactional
+    public void setPageViewed(String hash) {
+        try {
+            Visit visit = hashService.getVisitByHash(hash);
+            if (visit == null) {
+                return;
+            }
+
+            switch (visit.getPatient().getStatus()) {
+                case NEW:
+                case SENT:
+                case NONE:
+                    visit.getPatient().setStatus(PatientStatus.SEEN);
+                    visitRepository.save(visit);
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            return;
+        }
+    }
+
+    @Transactional
     public Review ack(Review review) throws ServiceException {
         Visit visit = review.getVisit();
         Patient patient = visit.getPatient();
@@ -314,21 +340,46 @@ public class PatientService {
             throw new ServiceException("Log id not found");
         }
 
+        if (log.getAttempts() >= MAX_ATTEMPTS) {
+            throw new ServiceException("Maximum limit of " + MAX_ATTEMPTS + " push notifications has been reached for the log " + log.getId());
+        }
+
         FetchLogData data = visitorFetchLogService.getFetchLogData(log);
         Client client = clientService.getClientByUname(data.getUname());
-        List<Patient> patientList = new ArrayList<>();
 
-        if (log.getAttempts() == 0) {
-            patientList = sendMessagesForLogFirstTime(log, client);
-        } else {
-            patientList = resendMessagesForLog(log, client);
+
+        List<Patient> allPatients = patientRepository.findAllForLog(log, client.getId());
+
+        if (allPatients.size() == 0) {
+            throw new ServiceException("No patients will be affected");
         }
+
+        List<Patient> affectedPatients = new ArrayList<>();
+
+        for (Patient patient : allPatients) {
+            boolean isOk = sendPushNotificationToSinglePatient(client, patient);
+            if (isOk) {
+                affectedPatients.add(patient);
+            }
+        }
+
+        patientRepository.saveAll(allPatients);
+
+        log.setAttempts(log.getAttempts() + 1);
+        visitorFetchLogRepository.save(log);
+
+
+//        if (log.getAttempts() == 0) {
+//            patientList = sendMessagesForLogFirstTime(log, client);
+//        } else {
+//            patientList = resendMessagesForLog(log, client);
+//        }
 
         PushHistory pushHistory = new PushHistory();
         pushHistory.setLog(log);
         pushHistoryRepository.save(pushHistory);
 
-        return patientList;
+        return affectedPatients;
     }
 
 
@@ -362,8 +413,8 @@ public class PatientService {
     }
 
     private List<Patient> resendMessagesForLog(VisitorFetchLog log, Client client) throws ServiceException {
-        if (log.getAttempts() >= 3) {
-            throw new ServiceException("Maximum limit of 3 push notifications has been reached for the log " + log.getId());
+        if (log.getAttempts() >= MAX_ATTEMPTS) {
+            throw new ServiceException("Maximum limit of " + MAX_ATTEMPTS + " push notifications has been reached for the log " + log.getId());
         }
 
         List<Patient> patientsList = patientRepository.findAllToResend(log, client.getId());
@@ -395,12 +446,24 @@ public class PatientService {
     }
 
 
-    private void sendPushNotificationToSinglePatient(Client client, Patient patient) {
-        Visit visit = patient
-                .getVisits().stream()
-                .filter(e -> e.getStatus().equals(VisitStatus.NEW))
-                .findFirst()
-                .orElse(null);
+    private boolean sendPushNotificationToSinglePatient(Client client, Patient patient) {
+        Visit visit;
+
+        if (patient.getAttempts() == 0) {
+            visit = patient
+                    .getVisits().stream()
+                    .filter(e -> e.getStatus().equals(VisitStatus.NEW))
+                    .findFirst()
+                    .orElse(null);
+        } else if (patient.getAttempts() < MAX_ATTEMPTS){
+            visit = patient.getVisits().stream()
+//                    .filter(e -> e.getStatus().equals(VisitStatus.PROCESSED))
+                    .findFirst()
+                    .orElse(null);
+        } else {
+            return false;
+        }
+
 
         if (visit == null) {
             // should not be here because query above will select only the ones with visit status new
@@ -415,8 +478,10 @@ public class PatientService {
             patient.setStatus(PatientStatus.SENT);
             patient.setAttempts(patient.getAttempts() + 1);
         } catch (ServiceException e) {
-            return;
+            return false;
         }
+
+        return true;
     }
 
 

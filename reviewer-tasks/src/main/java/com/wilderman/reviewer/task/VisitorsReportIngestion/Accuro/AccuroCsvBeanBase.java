@@ -8,11 +8,10 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Date;
-import java.util.Arrays;
 
 @Getter
 @Setter
-public class AccuroCsvBean implements ICsvBean {
+public abstract class AccuroCsvBeanBase implements ICsvBean {
 
     @CsvBindByName(column = "Last Name")
     private String lastName;
@@ -20,18 +19,21 @@ public class AccuroCsvBean implements ICsvBean {
     @CsvBindByName(column = "First Name")
     private String firstName;
 
-    @CsvBindByName(column = "Birthdate")
-    @CsvDate(value = "MM/dd/yyyy")
-    private Date birthdate;
+//    @CsvBindByName(column = "Birthdate")
+//    @CsvDate(value = "MM/dd/yyyy")
+//    private Date birthdate;
 
     @CsvBindByName(column = "Cell Phone")
     private String phone;
 
     private String fullname;
 
-    @CsvBindByName(column = "Appointment Date")
-    @CsvDate(value = "MM/dd/yyyy")
-    private Date visitedOn;
+//    @CsvBindByName(column = "Appointment Date")
+//    @CsvDate(value = "MM/dd/yyyy")
+//    private Date visitedOn;
+//
+    protected abstract Date getVisitedOn();
+    protected abstract Date getBirthdate();
 
 
     public PatientVisitRecord toPatientVisitRecord() {

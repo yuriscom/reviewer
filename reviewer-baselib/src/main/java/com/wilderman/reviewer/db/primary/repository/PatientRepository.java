@@ -40,6 +40,14 @@ public interface PatientRepository extends ExtendedRepository<Patient, Long>, Cu
     @Query("select p from Patient p \n" +
             "join fetch p.visits v \n" +
             "where \n" +
+            "p.client.id = :clientId\n" +
+            "and v.log = :log")
+    List<Patient> findAllForLog(@Param("log") VisitorFetchLog log, @Param("clientId") Long clientId);
+
+
+    @Query("select p from Patient p \n" +
+            "join fetch p.visits v \n" +
+            "where \n" +
             "v.status in ('NEW') \n" +
             "and p.status in :statuses\n" +
             "and p.client.id = :clientId\n" +
