@@ -19,6 +19,8 @@ import com.wilderman.reviewer.task.VisitorsReportIngestion.*;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBeanDateSlashes;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBeanDateSql;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Cosmetic.CosmeticCsvBean;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.Imaging.ImagingContentNormalization;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.Imaging.ImagingCsvBean;
 import com.wilderman.reviewer.utils.AmazonClient;
 import com.wilderman.reviewer.utils.RandomString;
 import org.apache.commons.io.IOUtils;
@@ -104,19 +106,20 @@ public class VisitorsService {
     @Transactional
     public Integer ingestData() throws Exception {
 
-//        Optional.ofNullable(client)
-//                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
-
-//        Optional<VisitorFetchLog> logOpt = visitorFetchLogRepository
-//                .findTopByStatusAndNumRecordsGreaterThanOrderByCreatedAtAsc(VisitorFetchLogStatus.PENDING, 0);
         List<VisitorFetchLog> logOpt = visitorFetchLogRepository
                 .findNextToProcessAllClients(VisitorFetchLogStatus.PENDING);
-
         if (logOpt.size() == 0) {
             return 0;
         }
 
         VisitorFetchLog log = logOpt.get(0);
+
+
+        // debug
+//        VisitorFetchLog log = visitorFetchLogRepository.findById(240L)
+//                .orElseThrow(() -> new Exception());
+
+
         FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(log);
         Client client = clientService.getClientByUname(fetchLogData.getUname());
 
@@ -137,6 +140,7 @@ public class VisitorsService {
                 patientsMap = processFromXml(br, client);
             } else {
                 String content = IOUtils.toString(br);
+                content = normalizeContent(content, client);
                 patientsMap = processFromCsv(content, client);
             }
         } catch (Exception e) {
@@ -218,6 +222,8 @@ public class VisitorsService {
 
     private Class<? extends ICsvBean> getCsvBean(Client client, int attempt) {
         switch (client.getUname()) {
+            case "imaging":
+                return attempt == 1 ? ImagingCsvBean.class : null;
             case "cosmetic":
                 return attempt == 1 ? CosmeticCsvBean.class : null;
             case "accuro":
@@ -231,6 +237,15 @@ public class VisitorsService {
                         return null;
                 }
 
+        }
+    }
+
+    private String normalizeContent(String content, Client client) {
+        switch (client.getUname()) {
+            case "imaging":
+                return ImagingContentNormalization.normalize(content);
+            default:
+                return content;
         }
     }
 
@@ -258,7 +273,7 @@ public class VisitorsService {
         try {
             List<ICsvBean> beans = (List<ICsvBean>) cb.parse();
             map = beans.stream()
-                    .filter(bean -> bean.getPhone()!= null && bean.getPhone().length() > 0)
+                    .filter(bean -> bean.getPhone() != null && bean.getPhone().length() > 0)
                     .map(bean -> bean.toPatientVisitRecord())
                     .distinct()
                     .collect(Collectors.toMap(e -> e.getPhone(), e -> e));
