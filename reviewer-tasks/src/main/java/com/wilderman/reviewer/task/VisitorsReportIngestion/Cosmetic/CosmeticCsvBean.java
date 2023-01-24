@@ -35,18 +35,12 @@ public class CosmeticCsvBean implements ICsvBean {
     private String fullname;
 
     @CsvBindByName(column = "Date Visited")
-//    @CsvDate(value = "yyyy-MM-dd")
     @CsvDate(value = "MM/dd/yyyy")
     private Date lastVisit;
 
-//    @CsvBindByName(column = "Email Address")
-//    private String email;
 
     public PatientVisitRecord toPatientVisitRecord() {
         PatientVisitRecord patientVisitRecord = new PatientVisitRecord();
-//        patientVisitRecord.setBirthdate(getBirthdate());
-//        patientVisitRecord.setEmail(getEmail());
-//        patientVisitRecord.setOhip(getOhip());
         patientVisitRecord.setPhone(getPhone());
         patientVisitRecord.setVisitedOn(getLastVisit());
 

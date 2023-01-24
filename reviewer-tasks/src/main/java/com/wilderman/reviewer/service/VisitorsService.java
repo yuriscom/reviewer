@@ -20,9 +20,11 @@ import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBeanD
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Accuro.AccuroCsvBeanDateSql;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Cosmetic.CosmeticCsvBean;
 import com.wilderman.reviewer.task.VisitorsReportIngestion.Imaging.ImagingContentNormalization;
-import com.wilderman.reviewer.task.VisitorsReportIngestion.Imaging.ImagingCsvBean;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.Imaging.ImagingCsvBeanBase;
+import com.wilderman.reviewer.task.VisitorsReportIngestion.Imaging.ImagingCsvBeanDateSql;
 import com.wilderman.reviewer.utils.AmazonClient;
 import com.wilderman.reviewer.utils.RandomString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.modelmapper.ModelMapper;
 import org.simpleframework.xml.Serializer;
@@ -42,6 +44,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class VisitorsService {
 
     @Value("${aws.s3.bucket}")
@@ -92,8 +95,6 @@ public class VisitorsService {
     @Value("${s3.visitorsMainFolder:visitors}")
     private String s3bucket;
 
-    protected final Logger log = LoggerFactory.getLogger(this.getClass());
-
 //    private Client client;
 //    private String s3Prefix;
 
@@ -106,57 +107,65 @@ public class VisitorsService {
     @Transactional
     public Integer ingestData() throws Exception {
 
+        log.debug("Checking pending files");
         List<VisitorFetchLog> logOpt = visitorFetchLogRepository
                 .findNextToProcessAllClients(VisitorFetchLogStatus.PENDING);
+        log.debug("Pending files found: " + logOpt.size());
         if (logOpt.size() == 0) {
             return 0;
         }
 
-        VisitorFetchLog log = logOpt.get(0);
-
+        VisitorFetchLog vflog = logOpt.get(0);
+        log.debug("Processing: " + vflog.getId());
 
         // debug
-//        VisitorFetchLog log = visitorFetchLogRepository.findById(240L)
+//        VisitorFetchLog vflog = visitorFetchLogRepository.findById(291L)
 //                .orElseThrow(() -> new Exception());
 
 
-        FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(log);
+        FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(vflog);
         Client client = clientService.getClientByUname(fetchLogData.getUname());
+        log.debug("Identified client: " + client.getUname());
 
         BufferedReader br = null;
         try {
-            InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, log.getS3key()));
+            InputStream stream = new ByteArrayInputStream(amazonClient.getObject(bucket, vflog.getS3key()));
             br = new BufferedReader(new InputStreamReader(stream));
         } catch (Exception e) {
             e.printStackTrace();
-            log.setStatus(VisitorFetchLogStatus.FAILED);
-            visitorFetchLogRepository.save(log);
+            vflog.setStatus(VisitorFetchLogStatus.FAILED);
+            visitorFetchLogRepository.save(vflog);
             return 0;
         }
 
         Map<String, PatientVisitRecord> patientsMap = new HashMap<>();
         try {
-            if (log.getS3key().endsWith(".xml")) {
+            if (vflog.getS3key().endsWith(".xml")) {
                 patientsMap = processFromXml(br, client);
             } else {
                 String content = IOUtils.toString(br);
+                log.debug("Successfully fetched content");
                 content = normalizeContent(content, client);
+                log.debug("Successfully normalized content");
                 patientsMap = processFromCsv(content, client);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            log.setStatus(VisitorFetchLogStatus.FAILED);
-            visitorFetchLogRepository.save(log);
+            vflog.setStatus(VisitorFetchLogStatus.FAILED);
+            visitorFetchLogRepository.save(vflog);
             return 0;
         }
 
         if (patientsMap == null) {
-            log.setStatus(VisitorFetchLogStatus.FAILED);
-            visitorFetchLogRepository.save(log);
+            log.error("patient map is null. check CSV");
+            vflog.setStatus(VisitorFetchLogStatus.FAILED);
+            visitorFetchLogRepository.save(vflog);
             return 0;
         }
 
+        log.debug("patient map size " + patientsMap.entrySet().size());
         List<Patient> existingPatients = patientRepository.findAllByPhoneInAndClient(new HashSet<>(patientsMap.keySet()), client);
+        log.debug("existing patients: " + existingPatients.size());
         List<Visit> visits = new ArrayList<>();
 
         try {
@@ -168,7 +177,7 @@ public class VisitorsService {
                     continue;
                 }
 
-                Visit visit = new Visit(existingPatient, patientVisitRecord.getVisitedOn(), log);
+                Visit visit = new Visit(existingPatient, patientVisitRecord.getVisitedOn(), vflog);
                 visit.setStatus(PatientStatus.unprocessed().contains(existingPatient.getStatus()) ? VisitStatus.NEW : VisitStatus.PROCESSED);
                 visit.setHash(RandomString.generateRandomString(8));
                 visits.add(visit);
@@ -181,13 +190,13 @@ public class VisitorsService {
                 newPatient.setSampleId(sampleId);
                 newPatient.setClient(client);
                 newPatient.setHash(RandomString.generateRandomString(8));
-                Visit visit = new Visit(newPatient, patientVisitRecord.getVisitedOn(), log);
+                Visit visit = new Visit(newPatient, patientVisitRecord.getVisitedOn(), vflog);
                 visit.setHash(RandomString.generateRandomString(8));
                 visits.add(visit);
             }
 
             visitRepository.saveAll(visits);
-            log.setStatus(VisitorFetchLogStatus.PROCESSED);
+            vflog.setStatus(VisitorFetchLogStatus.PROCESSED);
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -223,7 +232,7 @@ public class VisitorsService {
     private Class<? extends ICsvBean> getCsvBean(Client client, int attempt) {
         switch (client.getUname()) {
             case "imaging":
-                return attempt == 1 ? ImagingCsvBean.class : null;
+                return attempt == 1 ? ImagingCsvBeanDateSql.class : null;
             case "cosmetic":
                 return attempt == 1 ? CosmeticCsvBean.class : null;
             case "accuro":
@@ -278,6 +287,7 @@ public class VisitorsService {
                     .distinct()
                     .collect(Collectors.toMap(e -> e.getPhone(), e -> e));
         } catch (Exception e) {
+            log.error(e.getMessage());
             e.printStackTrace();
             return processFromCsv(content, client, ++attempt);
         }
@@ -285,108 +295,5 @@ public class VisitorsService {
 
         return map;
     }
-
-//    private Map<String, PatientVisitRecord> processFromCsv(BufferedReader br) {
-//        HeaderColumnNameMappingStrategy ms = new HeaderColumnNameMappingStrategy();
-//        ms.setType(AccuroCsvBeanDateSlashes.class);
-//        CsvToBean cb = new CsvToBeanBuilder(br)
-//                .withType(AccuroCsvBeanDateSlashes.class)
-//                .withMappingStrategy(ms)
-//                .build();
-//
-//        Map<String, PatientVisitRecord> map = null;
-//        try {
-//            List<AccuroCsvBeanDateSlashes> beans = (List<AccuroCsvBeanDateSlashes>) cb.parse();
-//            map = beans.stream()
-//                    .filter(bean -> bean.getPhone().length() > 0)
-//                    .map(bean -> bean.toPatientVisitRecord())
-//                    .collect(Collectors.toMap(e -> e.getPhone(), e -> e));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//
-//        return map;
-//    }
-
-//    @Transactional
-//    public boolean resendVisitorsByLogId(Long logId) throws Exception {
-//
-//        Optional.ofNullable(client)
-//                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
-//
-//        VisitorFetchLog log = visitorFetchLogRepository.findById(logId)
-//                .orElseThrow(() -> new Exception("Log not found for log " + logId));
-//
-//        List<Patient> patients = patientRepository.findAllToResend(log, client.getId());
-//
-//        if (patients.size() == 0) {
-//            return false;
-//        }
-//
-//        for (Patient patient : patients) {
-//            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.PROCESSED)).findFirst().orElse(null);
-//            if (visit == null) {
-//                // should not be here because query above will select only the ones with visit status new
-//            }
-//            try {
-//                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
-//                Client client = clientService.getClientByUname(data.getUname());
-//                patientService.pushNotification(visit, client);
-//            } catch (ServiceException e) {
-//                continue;
-//            }
-//        }
-//
-//        return true;
-//    }
-//
-//
-//    @Transactional
-//    public boolean scanVisitorsAndSendMessages() throws Exception {
-//
-//        Optional.ofNullable(client)
-//                .orElseThrow(() -> new Exception("Client not found for profile " + activeProfile));
-//
-//        List<Long> logIdsToUpdate = visitRepository.findUnprocessedLogsForClient(client.getId());
-////        List<Patient> patientsJoined = patientRepository.xxx("NEW");
-//        List<Patient> patientsJoined = patientRepository.findAllUnprocessed(PatientStatus.unprocessed(), client.getId());
-//
-//        Set<Patient> patients = new HashSet<>(patientsJoined);
-//
-//        if (patients.size() == 0) {
-//            return false;
-//        }
-//
-//        for (Patient patient : patients) {
-//            Visit visit = patient.getVisits().stream().filter(e -> e.getStatus().equals(VisitStatus.NEW)).findFirst().orElse(null);
-//            if (visit == null) {
-//                // should not be here because query above will select only the ones with visit status new
-//            }
-//            try {
-//                FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
-//                Client client = clientService.getClientByUname(data.getUname());
-//                patientService.pushNotification(visit, client);
-//
-//                for (Visit anyVisit : patient.getVisits()) {
-//                    anyVisit.setStatus(VisitStatus.PROCESSED);
-//                }
-//
-//                patient.setStatus(PatientStatus.SENT);
-//            } catch (ServiceException e) {
-//                continue;
-//            }
-//        }
-//
-//        if (patients.size() > 0) {
-//            patientRepository.saveAll(patients);
-//        }
-//
-//        if (logIdsToUpdate.size() > 0) {
-//            visitRepository.setSentByLogIds(logIdsToUpdate);
-//        }
-//
-//        return true;
-//    }
 
 }
