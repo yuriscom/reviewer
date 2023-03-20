@@ -1,0 +1,2 @@
+Hi %name%, thanks for visiting us at %clinic_name%. We would love some feedback about your experience. As a token of our appreciation for telling us how we did, we would like to give you a 100 reward points credit. %url%
+*Please note that your feedback, whether positive or negative, helps us to improve and serve you better and will have no impact on your treatment as one of our valued patients.*

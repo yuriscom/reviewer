@@ -119,7 +119,7 @@ public class VisitorsService {
         log.debug("Processing: " + vflog.getId());
 
         // debug
-//        VisitorFetchLog vflog = visitorFetchLogRepository.findById(291L)
+//        VisitorFetchLog vflog = visitorFetchLogRepository.findById(329L)
 //                .orElseThrow(() -> new Exception());
 
 
@@ -182,6 +182,7 @@ public class VisitorsService {
                 visit.setHash(RandomString.generateRandomString(8));
                 visits.add(visit);
                 patientsMap.remove(phone);
+                existingPatient.setSampleId(fetchLogData.getIsDirect() ? 3 : 2);
             }
 
             for (PatientVisitRecord patientVisitRecord : patientsMap.values()) {
@@ -195,7 +196,12 @@ public class VisitorsService {
                 visits.add(visit);
             }
 
+
             visitRepository.saveAll(visits);
+
+            // update also existing patients
+            patientRepository.saveAll(existingPatients);
+
             vflog.setStatus(VisitorFetchLogStatus.PROCESSED);
         } catch (Exception e) {
             e.printStackTrace();

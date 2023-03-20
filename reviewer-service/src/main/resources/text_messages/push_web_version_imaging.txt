@@ -1,0 +1,2 @@
+Hi %name%, thank you so much for visiting us at the %clinic_name%! We would appreciate it if you could take a moment to tell us about your experience. %url%
+*Please note that your feedback, whether positive or negative, helps us to improve and serve you better and will have no impact on your treatment as one of our valued patients.*

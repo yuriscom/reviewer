@@ -1,1 +1,0 @@
-Hi %name%, thank you so much for visiting us at the %clinic_name%. We would appreciate if you took a minute to tell us about your experience today. %url%

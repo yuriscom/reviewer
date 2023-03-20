@@ -187,11 +187,11 @@ public class PatientService {
                 templateName = "push";
                 break;
             case 2:
-                templateName = "push_web_version";
+                templateName = "push_web_version_" + client.getUname() ;
                 break;
             case 3:
             default:
-                templateName = "push_direct_version";
+                templateName = "push_direct_version_" + client.getUname();
                 break;
         }
 
@@ -348,7 +348,7 @@ public class PatientService {
         Client client = clientService.getClientByUname(data.getUname());
 
 
-        List<Patient> allPatients = patientRepository.findAllForLog(log, client.getId());
+        List<Patient> allPatients = patientRepository.findAllToPush(log, client.getId());
 
         if (allPatients.size() == 0) {
             throw new ServiceException("No patients will be affected");

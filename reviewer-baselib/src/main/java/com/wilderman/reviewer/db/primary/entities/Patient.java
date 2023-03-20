@@ -53,6 +53,7 @@ public class Patient implements IEntityId {
     @Column(name = "hash", length = 255)
     private String hash;
 
+    // 2 - web, 3 - direct
     @Column(name = "sample_id")
     private Integer sampleId = 3;
 

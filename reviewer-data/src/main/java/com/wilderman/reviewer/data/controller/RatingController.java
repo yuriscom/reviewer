@@ -102,7 +102,7 @@ public class RatingController extends BaseController {
                 return new Response<>(HttpStatus.SC_BAD_REQUEST, null, output.getBody().getError());
             }
         } catch (Exception e) {
-            String sss = "";
+            log.error(e.getMessage());
             return new Response<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, null, e.getMessage());
         }
     }

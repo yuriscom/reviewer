@@ -44,6 +44,25 @@ public interface PatientRepository extends ExtendedRepository<Patient, Long>, Cu
             "and v.log = :log")
     List<Patient> findAllForLog(@Param("log") VisitorFetchLog log, @Param("clientId") Long clientId);
 
+    @Query("select p from Patient p \n" +
+            "join fetch p.visits v \n" +
+            "where \n" +
+            "p.client.id = :clientId\n" +
+            "and v.log = :log \n" +
+            "and p.attempts < 3"
+    )
+    List<Patient> findAllToPush(@Param("log") VisitorFetchLog log, @Param("clientId") Long clientId);
+
+    @Query("select p from Patient p \n" +
+            "join fetch p.visits v \n" +
+            "where \n" +
+            "p.client.id = :clientId\n" +
+            "and v.log = :log \n" +
+            "and p.status in ('SENT')\n" +
+            "and v.status not in ('NEW')\n" +
+            "and p.attempts < 3"
+    )
+    List<Patient> findAllToResend(@Param("log") VisitorFetchLog log, @Param("clientId") Long clientId);
 
     @Query("select p from Patient p \n" +
             "join fetch p.visits v \n" +
@@ -54,16 +73,7 @@ public interface PatientRepository extends ExtendedRepository<Patient, Long>, Cu
             "and v.log = :log")
     List<Patient> findAllUnprocessedForLog(@Param("statuses") List<PatientStatus> statuses, @Param("log") VisitorFetchLog log, @Param("clientId") Long clientId);
 
-    @Query("select p from Patient p \n" +
-            "join fetch p.visits v \n" +
-            "where \n" +
-            "v.log = :log \n" +
-            "and p.status in ('SENT')\n" +
-            "and p.client.id = :clientId\n" +
-            "and v.status not in ('NEW')\n" +
-            "and p.attempts < 3"
-    )
-    List<Patient> findAllToResend(@Param("log") VisitorFetchLog log, @Param("clientId") Long clientId);
+
 
     @Query(value = "select p from Patient p join fetch p.visits v where v.log = :log order by p.id desc, v.visitedOn desc",
             countQuery = "select count(p) from Patient p join p.visits v where v.log = :log"
