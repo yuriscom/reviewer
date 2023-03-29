@@ -98,12 +98,8 @@ public class PatientService {
 
     @Transactional
     public String initPatientForTest(String phoneNumber, String uname, Long id) throws ServiceException {
-//        Patient patient = patientRepository.findFirstByOhip(testOhip);
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ServiceException("Patient with id " + id + " was not found"));
-//        if (patient == null) {
-//            throw new ServiceException("Patient with test ohip was not found");
-//        }
 
         Client client = clientService.getClientByUname(uname);
         if (client == null) {
@@ -125,12 +121,9 @@ public class PatientService {
         }
 
         patient.setStatus(PatientStatus.NEW);
-//        patient.setClient(client);
         patient.setAttempts(0);
 
-//        for (Visit visit : Optional.ofNullable(patient.getVisits()).orElse(Collections.emptyList())) {
         visit.setStatus(VisitStatus.NEW);
-//        }
         VisitorFetchLog log = visit.getLog();
         log.setAttempts(0);
 
@@ -141,22 +134,6 @@ public class PatientService {
 
 
         sendPushNotificationToSinglePatient(client, patient);
-//        FetchLogData data = visitorFetchLogService.getFetchLogData(visit.getLog());
-//        Client client = clientService.getClientByUname(data.getUname());
-//
-//        pushNotification(visit, client);
-//
-//        for (Visit anyVisit : patient.getVisits()) {
-//            anyVisit.setStatus(VisitStatus.PROCESSED);
-//        }
-//
-//        patient.setStatus(PatientStatus.SENT);
-//        patient.setAttempts(patient.getAttempts() + 1);
-//        log.setAttempts(log.getAttempts() + 1);
-//
-//        patientRepository.save(patient);
-//        visitorFetchLogRepository.save(log);
-//
         String hash;
         try {
             hash = hashService.toHash(visit);

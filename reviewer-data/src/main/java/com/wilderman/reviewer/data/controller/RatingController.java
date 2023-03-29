@@ -4,13 +4,13 @@ import com.wilderman.reviewer.config.GenerateSwaggerSpec;
 import com.wilderman.reviewer.controller.BaseController;
 import com.wilderman.reviewer.data.annotation.RequireValidHash;
 import com.wilderman.reviewer.data.dto.*;
-import com.wilderman.reviewer.db.primary.entities.*;
+import com.wilderman.reviewer.db.primary.entities.Client;
+import com.wilderman.reviewer.db.primary.entities.Patient;
+import com.wilderman.reviewer.db.primary.entities.Review;
+import com.wilderman.reviewer.db.primary.entities.Visit;
 import com.wilderman.reviewer.dto.FetchLogData;
-import com.wilderman.reviewer.dto.SmsResponseHandlerInput;
-import com.wilderman.reviewer.dto.SmsResponseHandlerOutput;
 import com.wilderman.reviewer.dto.StepData;
 import com.wilderman.reviewer.dto.response.Response;
-import com.wilderman.reviewer.enums.Step;
 import com.wilderman.reviewer.exception.ServiceException;
 import com.wilderman.reviewer.service.*;
 import org.apache.http.HttpStatus;
@@ -81,30 +81,28 @@ public class RatingController extends BaseController {
                 throw new ServiceException("Hash is invalid");
             }
 
-
             FetchLogData fetchLogData = visitorFetchLogService.getFetchLogData(visit.getLog());
             Client client = clientService.getClientByUname(fetchLogData.getUname());
 
             // for possible re-rate
             patientService.normalizePreRateState(visit);
 
-            Patient patient = visit.getPatient();
+            validateUserRateStatus(visit);
+            RateResponse rateResponse = new RateResponse(hash, patientService.generateReviewLink(hash, rateInput.getUserAgent(), client), true);
+            return new Response<>(HttpStatus.SC_OK, rateResponse);
 
-            SmsResponseHandlerInput input = new SmsResponseHandlerInput(patient, rateInput.getRating());
-
-            SmsResponseHandlerOutput output = lambdaService.rateHandler(input);
-//            RateResponse rateResponse = mapper.map(output, RateResponse.class);
-
-            if (output.getStatusCode() == 200 && output.getBody().getHash().length() > 0) {
-                RateResponse rateResponse = new RateResponse(hash, patientService.generateReviewLink(hash, rateInput.getUserAgent(), client), true);
-                return new Response<>(HttpStatus.SC_OK, rateResponse);
-            } else {
-                return new Response<>(HttpStatus.SC_BAD_REQUEST, null, output.getBody().getError());
-            }
         } catch (Exception e) {
             log.error(e.getMessage());
             return new Response<>(HttpStatus.SC_INTERNAL_SERVER_ERROR, null, e.getMessage());
         }
+    }
+
+    private void validateUserRateStatus(Visit visit) throws ServiceException {
+        // if user got to the rating page, it would be wrong to send exceptions
+        // user status should be checked before sending the sms AND when opening the reviewer page (step request)
+        // but if user is here, let him rate, nothing is wrong with it.
+        visit.getPatient();
+        return;
     }
 
     @PostMapping(value = "/rating/review")
