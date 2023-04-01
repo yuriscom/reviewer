@@ -88,6 +88,9 @@ public class RatingController extends BaseController {
             patientService.normalizePreRateState(visit);
 
             validateUserRateStatus(visit);
+
+            patientService.rate(visit, rateInput.getRating());
+
             RateResponse rateResponse = new RateResponse(hash, patientService.generateReviewLink(hash, rateInput.getUserAgent(), client), true);
             return new Response<>(HttpStatus.SC_OK, rateResponse);
 

@@ -272,6 +272,24 @@ public class PatientService {
         return review.getRating() > BAD_RATING_MAX && review.getMessage() == null;
     }
 
+
+    @Transactional
+    public Review rate(Visit visit, Integer rating) {
+        Patient patient = visit.getPatient();
+        visit.setStatus(VisitStatus.RATED);
+        visit.getPatient().setStatus(PatientStatus.RATED);
+
+        Review review = new Review();
+        review.setPatient(patient);
+        review.setVisit(visit);
+        review.setRating(rating);
+        review.setHash(visit.getHash());
+
+
+        reviewRepository.save(review);
+        return review;
+    }
+
     @Transactional
     public Review leaveBadReview(Review review, String message) throws ServiceException {
         Visit visit = review.getVisit();
