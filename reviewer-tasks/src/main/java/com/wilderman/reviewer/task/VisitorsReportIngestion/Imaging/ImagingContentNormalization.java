@@ -101,8 +101,8 @@ public class ImagingContentNormalization {
                 String row = rows.get(i);
                 if (!StringUtils.isEmpty(formatRow(row))) {
                     List<String> resultElements = new ArrayList<>();
-                    String[] elements = row.split(",");
-                    if (elements.length < maxActiveHeaderColumnIdx) {
+                    String[] elements = row.split(",", -1);
+                    if (elements.length - 1 < maxActiveHeaderColumnIdx) {
                         continue;
                     }
                     log.info(row);

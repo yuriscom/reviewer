@@ -119,7 +119,7 @@ public class VisitorsService {
         log.debug("Processing: " + vflog.getId());
 
         // debug
-//        VisitorFetchLog vflog = visitorFetchLogRepository.findById(329L)
+//        VisitorFetchLog vflog = visitorFetchLogRepository.findById(353L)
 //                .orElseThrow(() -> new Exception());
 
 
